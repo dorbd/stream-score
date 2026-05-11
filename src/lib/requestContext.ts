@@ -11,6 +11,31 @@ export interface RequestContext {
   locale: string;
   lat: number | null;
   lng: number | null;
+  /**
+   * Stable bucket key built from country + timezone + locale. Useful as a
+   * default partial key — the full Daily Bucket key composed in `bucket.ts`
+   * extends this with services hash, hour bucket, weather bucket, weekday,
+   * and holiday flag.
+   */
+  bucketKey: string;
+  /**
+   * Whether the user has granted consent for personalized features (anchor,
+   * taste, local storage of preferences). For EU users we default to `false`
+   * until the consent banner is accepted; everyone else defaults to `true`.
+   */
+  consentGranted: boolean;
+}
+
+// EU/EEA + UK ISO 3166-1 alpha-2 codes. Consent defaults to false in these.
+const EU_COUNTRIES = new Set([
+  "AT", "BE", "BG", "HR", "CY", "CZ", "DK", "EE", "FI", "FR",
+  "DE", "GR", "HU", "IE", "IT", "LV", "LT", "LU", "MT", "NL",
+  "PL", "PT", "RO", "SK", "SI", "ES", "SE", "IS", "LI", "NO",
+  "GB", "CH",
+]);
+
+export function isEuCountry(country: string | null): boolean {
+  return !!country && EU_COUNTRIES.has(country.toUpperCase());
 }
 
 const pick = (h: Headers, ...keys: string[]): string | null => {
@@ -62,6 +87,19 @@ export function getRequestContext(req: NextRequest): RequestContext {
   const isMobile =
     chMobile === "?1" || (chMobile == null && /Mobi|Android|iPhone|iPad/i.test(ua));
 
+  const locale = parseLocale(h.get("accept-language"));
+  const countryUpper = (country ?? "").toUpperCase();
+  const bucketKey = [countryUpper || "??", timezone, locale].join("|");
+
+  // Consent: explicit cookie wins; otherwise default false in EU, true elsewhere.
+  const consentCookie = req.cookies.get("ss_consent")?.value;
+  const consentGranted =
+    consentCookie === "granted"
+      ? true
+      : consentCookie === "denied"
+        ? false
+        : !isEuCountry(country);
+
   return {
     country,
     region,
@@ -70,8 +108,10 @@ export function getRequestContext(req: NextRequest): RequestContext {
     hourLocal,
     dayOfWeek,
     isMobile,
-    locale: parseLocale(h.get("accept-language")),
+    locale,
     lat,
     lng,
+    bucketKey,
+    consentGranted,
   };
 }

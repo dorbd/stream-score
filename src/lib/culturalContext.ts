@@ -72,3 +72,17 @@ export function trendingScoreFor(id: number, cc: CulturalContext): number {
   if (week) return 0.5;
   return 0;
 }
+
+/**
+ * Compact "holiday flag" used in the Daily Bucket cache key. Combines the soft
+ * holiday window with an "anniversary day" flag so the bucket key reflects
+ * whether anything anniversary-worthy is happening today.
+ */
+export function holidayFlag(
+  holiday: string | null,
+  cultural?: { anniversaryIds: Set<number> },
+): string {
+  const base = holiday ?? "none";
+  if (cultural && cultural.anniversaryIds.size > 0) return `${base}+anni`;
+  return base;
+}

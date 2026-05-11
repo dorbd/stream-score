@@ -78,6 +78,23 @@ export const DAYPART_BIAS: Record<DaypartKey, DaypartBias> = {
   },
 };
 
+export type HourBucket = "morning" | "afternoon" | "evening" | "late-night";
+
+/**
+ * Coarser 4-bucket daypart used for the global Daily Bucket cache key.
+ * - morning: 5..11
+ * - afternoon: 12..16
+ * - evening: 17..22
+ * - late-night: 23..4
+ */
+export function classifyHourBucket(hour: number): HourBucket {
+  const h = ((hour % 24) + 24) % 24;
+  if (h >= 5 && h <= 11) return "morning";
+  if (h >= 12 && h <= 16) return "afternoon";
+  if (h >= 17 && h <= 22) return "evening";
+  return "late-night";
+}
+
 /** Classify {hour, dayOfWeek} into a daypart key. dayOfWeek: 0=Sun..6=Sat. */
 export function classifyDaypart(hour: number, dayOfWeek: number): DaypartKey {
   const isWeekend = dayOfWeek === 0 || dayOfWeek === 6;

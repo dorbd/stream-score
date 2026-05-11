@@ -213,3 +213,13 @@ function capitalize(s: string): string {
 }
 
 export { VOTE_FLOOR };
+
+/**
+ * Thin wrapper around `rerank` that returns the top-60 candidates with their
+ * reasons attached. This is the input the LLM reranker uses to pick a hero
+ * and write a caption. Does not change the scoring weights — same `rerank`
+ * pipeline, just sliced.
+ */
+export function rankTop60(input: RerankInput): RankedMovie[] {
+  return rerank(input).slice(0, 60);
+}

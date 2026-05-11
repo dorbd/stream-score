@@ -4,6 +4,30 @@
 export type OutdoorVibe =
   | "rainy-cold" | "snowy" | "stormy" | "hot-clear" | "mild-clear" | "overcast" | "foggy" | "unknown";
 
+/**
+ * Coarse weather bucket used for the global Daily Bucket cache key.
+ * Collapses the more granular OutdoorVibe into 4 buckets so that small wx
+ * fluctuations don't blow the cache.
+ */
+export type WeatherBucket = "cozy" | "bright" | "neutral" | "unknown";
+
+export function classifyWeatherBucket(vibe: OutdoorVibe): WeatherBucket {
+  switch (vibe) {
+    case "rainy-cold":
+    case "snowy":
+    case "stormy":
+    case "foggy":
+      return "cozy";
+    case "hot-clear":
+    case "mild-clear":
+      return "bright";
+    case "overcast":
+      return "neutral";
+    default:
+      return "unknown";
+  }
+}
+
 export type HolidayTag =
   | "halloween" | "valentines" | "pride" | "christmas" | "new-year"
   | "thanksgiving" | "independence-day" | "mothers-day" | "fathers-day" | null;
