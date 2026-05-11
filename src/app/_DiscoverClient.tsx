@@ -25,6 +25,24 @@ import { MOODS } from "@/lib/moods";
 import { cn } from "@/lib/cn";
 import type { DiscoverResponse, MovieResult, TmdbGenre } from "@/lib/types";
 
+interface TonightMeta {
+  finalScore: number;
+  boost: number;
+  reasons: { key: string; magnitude: number; phrase: string }[];
+  reasonSentence: string;
+  daypart: string;
+}
+interface TonightContext {
+  daypart: string;
+  daypartLabel: string;
+  hourLocal: number;
+  timezone: string;
+  city: string | null;
+  weather: string;
+  isDark: boolean;
+  holiday: string | null;
+}
+
 type Tab = "discover" | "tonight" | "watchlist";
 
 export function DiscoverClient({
@@ -169,9 +187,53 @@ export function DiscoverClient({
     [visibleResults, watchlist.values],
   );
 
-  const topPick = visibleResults[0];
-  const alts = visibleResults.slice(1, 4);
   const activeFilters = countActiveFilters(filters) + (moodKey ? 1 : 0) + (timeBudget !== "any" ? 1 : 0);
+
+  // Tonight tab — calls /api/tonight to get smart-reranked picks
+  const [tonightLoading, setTonightLoading] = useState(false);
+  const [tonightPick, setTonightPick] = useState<MovieResult & { _tonight?: TonightMeta } | null>(null);
+  const [tonightAlts, setTonightAlts] = useState<(MovieResult & { _tonight?: TonightMeta })[]>([]);
+  const [tonightCtx, setTonightCtx] = useState<TonightContext | null>(null);
+
+  useEffect(() => {
+    if (tab !== "tonight") return;
+    let canceled = false;
+    Promise.resolve().then(() => {
+      if (!canceled) setTonightLoading(true);
+    });
+    const params = new URLSearchParams();
+    if (selected.length) params.set("providers", selected.join(","));
+    if (selected.length && filters.onlyMine) params.set("only_mine", "true");
+    else if (!filters.onlyMine) params.set("only_mine", "false");
+    if (watchlist.values.length) params.set("watchlist", watchlist.values.join(","));
+    if (hidden.values.length) params.set("hide", hidden.values.join(","));
+    const moodGenres = moodKey ? (MOODS.find((m) => m.key === moodKey)?.genres ?? []) : [];
+    if (moodGenres.length) params.set("genres", moodGenres.join(","));
+    fetch(`/api/tonight?${params.toString()}`)
+      .then((r) => r.json())
+      .then((data) => {
+        if (canceled) return;
+        if (data.error) {
+          setTonightPick(null);
+          setTonightAlts([]);
+          return;
+        }
+        setTonightPick(data.pick ?? null);
+        setTonightAlts(data.alts ?? []);
+        setTonightCtx(data.context ?? null);
+      })
+      .catch(() => {})
+      .finally(() => {
+        if (!canceled) setTonightLoading(false);
+      });
+    return () => {
+      canceled = true;
+    };
+  }, [tab, selected, watchlist.values, hidden.values, filters.onlyMine, moodKey]);
+
+  // Existing discover grid still uses the discover endpoint
+  const topPick = tonightPick ?? visibleResults[0];
+  const alts = tonightAlts.length ? tonightAlts : visibleResults.slice(1, 4);
 
   const acceptShareIntersect = () => {
     if (!showShareBanner) return;
@@ -466,65 +528,47 @@ export function DiscoverClient({
         </div>
       )}
 
-      {/* Tonight tab: hero pick + 3 alts */}
+      {/* Tonight tab: cinematic hero + alts ribbon */}
       {tab === "tonight" && !error && (
-        <section className="space-y-3" aria-live="polite">
-          {loading && !topPick && <LoadingGrid count={4} />}
+        <section className="space-y-6" aria-live="polite">
+          {tonightCtx && <TonightContextBar ctx={tonightCtx} />}
+          {tonightLoading && !topPick && <LoadingGrid count={4} />}
           {topPick && (
-            <Link
-              href={`/movie/${topPick.tmdbId}`}
-              className="group relative block overflow-hidden rounded-3xl border border-[var(--color-border-strong)] shadow-xl"
-            >
-              <div className="relative aspect-[16/9] w-full">
-                {topPick.backdropUrl ? (
-                  <Image
-                    src={topPick.backdropUrl}
-                    alt=""
-                    fill
-                    sizes="(max-width: 1024px) 100vw, 960px"
-                    className="object-cover transition group-hover:scale-[1.02]"
-                    priority
-                  />
-                ) : (
-                  <div className="h-full w-full bg-[var(--color-surface)]" />
-                )}
-                <div className="absolute inset-0 bg-gradient-to-t from-[var(--color-bg)] via-[var(--color-bg)]/60 to-transparent" />
-                <div className="absolute right-4 top-4 inline-flex items-center gap-1 rounded-full bg-black/70 px-3 py-1.5 font-mono text-sm font-bold ring-1 ring-white/10">
-                  <span style={{ color: scoreTextColor(topPick.ratings.combined ?? topPick.ratings.audience) }}>
-                    {Math.round(topPick.ratings.combined ?? topPick.ratings.audience ?? 0)}
-                  </span>
-                  <span className="text-[10px] text-white/60">/ 100</span>
-                </div>
-                <div className="absolute inset-x-0 bottom-0 p-5 sm:p-7">
-                  <div className="text-[11px] font-semibold uppercase tracking-wider text-[var(--color-accent)]">
-                    Top pick for tonight
-                  </div>
-                  <h2 className="mt-1 font-display text-3xl leading-tight tracking-tight sm:text-5xl">
-                    {topPick.title}
-                  </h2>
-                  <div className="mt-1 text-sm text-[var(--color-muted)]">
-                    {topPick.year ?? "—"}
-                    {topPick.runtime ? ` · ${topPick.runtime} min` : ""}
-                    {topPick.genres[0] ? ` · ${topPick.genres.slice(0, 2).join(", ")}` : ""}
-                  </div>
-                  <p className="mt-2 line-clamp-2 max-w-2xl text-sm text-[var(--color-text)]/80">
-                    {topPick.overview}
-                  </p>
-                </div>
-              </div>
-            </Link>
+            <TonightHero
+              movie={topPick}
+              meta={(topPick as MovieResult & { _tonight?: TonightMeta })._tonight}
+              reduce={!!reduce}
+            />
           )}
           {alts.length > 0 && (
-            <div className="grid grid-cols-3 gap-3 sm:grid-cols-3">
-              {alts.map((m, i) => (
-                <MovieCard key={m.tmdbId} movie={m} selectedProviderKeys={selectedSet} index={i} />
-              ))}
+            <div>
+              <div className="rubric mb-2" style={{ letterSpacing: "0.24em" }}>Or maybe</div>
+              <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
+                {alts.map((m, i) => (
+                  <div key={m.tmdbId} className="w-[44vw] shrink-0 snap-center sm:w-[220px]">
+                    <MovieCard movie={m} selectedProviderKeys={selectedSet} index={i} />
+                  </div>
+                ))}
+              </div>
             </div>
           )}
-          {!loading && !topPick && (
+          {!tonightLoading && !topPick && (
             <EmptyState
-              title="Nothing on tonight"
-              description="Try clearing filters or turning off 'Only on my services'."
+              title="The marquee's dark tonight."
+              description="Drop a filter or two and the lights come back on."
+              action={
+                <button
+                  type="button"
+                  onClick={() => {
+                    setFilters(DEFAULT_FILTERS);
+                    setMoodKey(null);
+                    setTimeBudget("any");
+                  }}
+                  className="rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)]"
+                >
+                  Reset filters
+                </button>
+              }
             />
           )}
         </section>
@@ -669,9 +713,200 @@ export function DiscoverClient({
 }
 
 function scoreTextColor(score: number | null | undefined): string {
-  if (score == null) return "white";
-  if (score >= 80) return "oklch(0.78 0.16 145)";
-  if (score >= 65) return "oklch(0.84 0.15 75)";
-  if (score >= 45) return "oklch(0.84 0.16 75)";
-  return "oklch(0.67 0.22 25)";
+  if (score == null) return "var(--color-subtle)";
+  if (score >= 80) return "var(--color-good)";
+  if (score >= 65) return "var(--color-warn)";
+  if (score >= 45) return "var(--color-accent)";
+  return "var(--color-bad)";
+}
+
+function TonightHero({
+  movie,
+  meta: tMeta,
+  reduce,
+}: {
+  movie: MovieResult;
+  meta?: TonightMeta;
+  reduce: boolean;
+}) {
+  const score = tMeta?.finalScore ?? movie.ratings.combined ?? movie.ratings.audience;
+  const color = scoreTextColor(score);
+  const now = new Date();
+  const dateRubric = now
+    .toLocaleDateString("en-US", { month: "short", day: "numeric" })
+    .toUpperCase();
+  const imdb = movie.ratings.imdb;
+  const rt = movie.ratings.rottenTomatoes;
+  const meta = movie.ratings.metacritic;
+
+  return (
+    <Link
+      href={`/movie/${movie.tmdbId}`}
+      className="group relative -mx-4 block overflow-hidden border-y border-[var(--color-border)] sm:-mx-6 sm:rounded-[var(--radius-hero)] sm:border"
+    >
+      <div className="grid grid-cols-1 sm:grid-cols-[1fr_minmax(200px,260px)]">
+        {/* Backdrop column */}
+        <motion.div
+          className="backdrop-undertow relative aspect-[16/10] w-full sm:aspect-[4/5] sm:min-h-[420px]"
+          initial={reduce ? false : { scale: 1.04 }}
+          animate={{ scale: 1 }}
+          transition={{ duration: 1.2, ease: "easeOut" }}
+        >
+          {movie.backdropUrl ? (
+            <div className="absolute inset-0">
+              <Image
+                src={movie.backdropUrl}
+                alt=""
+                fill
+                sizes="(max-width: 768px) 100vw, 720px"
+                priority
+                className="object-cover"
+              />
+            </div>
+          ) : null}
+          <div
+            aria-hidden
+            className="absolute inset-0 z-[2]"
+            style={{
+              background:
+                "linear-gradient(to top, var(--color-bg) 0%, oklch(0.13 0.03 28 / 0.55) 45%, transparent 100%)",
+            }}
+          />
+          <div className="absolute inset-x-0 bottom-0 z-[3] p-5 sm:p-7">
+            <div className="rubric mb-2" style={{ color: "var(--color-accent)", letterSpacing: "0.24em" }}>
+              Pick · Tonight · {dateRubric}
+            </div>
+            <h2 className="font-display text-3xl leading-[1.02] tracking-[-0.02em] sm:text-5xl">
+              {movie.title}
+            </h2>
+            <div className="num-prose mt-1.5 text-[12px] uppercase tracking-wider text-[var(--color-muted)]">
+              {movie.year ?? "—"}
+              {movie.runtime ? ` · ${movie.runtime} min` : ""}
+              {movie.genres[0] ? ` · ${movie.genres.slice(0, 2).join(", ")}` : ""}
+            </div>
+            <p className="mt-3 line-clamp-2 max-w-xl text-sm text-[var(--color-text)]/85">
+              {movie.overview}
+            </p>
+            {tMeta?.reasonSentence && (
+              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--color-accent)]/40 bg-[var(--color-accent-wash)] px-3 py-1.5 text-xs text-[var(--color-text)]">
+                <span className="rubric" style={{ color: "var(--color-accent)", letterSpacing: "0.22em" }}>
+                  Why
+                </span>
+                <span className="text-[12px]">{tMeta.reasonSentence}</span>
+              </div>
+            )}
+          </div>
+        </motion.div>
+
+        {/* Score column */}
+        <div className="flex flex-col items-center justify-center gap-5 bg-[var(--color-bg-elevated)] px-5 py-7 sm:px-6">
+          <div className="rubric" style={{ letterSpacing: "0.24em" }}>
+            Combined score
+          </div>
+          <div className="relative">
+            <span
+              aria-hidden
+              className="absolute inset-0 -z-10 rounded-full blur-2xl"
+              style={{ background: color, opacity: 0.25 }}
+            />
+            <div
+              className="num-hero leading-none"
+              style={{
+                color,
+                fontSize: "clamp(96px, 14vw, 128px)",
+                fontWeight: 400,
+              }}
+            >
+              {score == null ? "—" : Math.round(score)}
+            </div>
+          </div>
+          <ScoreMicroBars imdb={imdb} rt={rt} meta={meta} />
+        </div>
+      </div>
+    </Link>
+  );
+}
+
+function TonightContextBar({ ctx }: { ctx: TonightContext }) {
+  const weatherEmoji: Record<string, string> = {
+    "rainy-cold": "🌧",
+    snowy: "❄️",
+    stormy: "⛈",
+    "hot-clear": "☀️",
+    "mild-clear": "🌤",
+    overcast: "☁️",
+    foggy: "🌫",
+    unknown: "🌙",
+  };
+  const holidayEmoji: Record<string, string> = {
+    halloween: "🎃",
+    christmas: "🎄",
+    valentines: "💝",
+    "new-year": "🎆",
+    thanksgiving: "🍂",
+    "independence-day": "🎇",
+    pride: "🏳️‍🌈",
+    "mothers-day": "💐",
+    "fathers-day": "👔",
+  };
+  const bits: { icon: string; label: string }[] = [
+    { icon: ctx.isDark ? "🌙" : "☀️", label: ctx.daypartLabel },
+    { icon: weatherEmoji[ctx.weather] ?? "·", label: ctx.weather.replace(/-/g, " ") },
+  ];
+  if (ctx.holiday) {
+    bits.unshift({ icon: holidayEmoji[ctx.holiday] ?? "✨", label: ctx.holiday.replace(/-/g, " ") });
+  }
+  if (ctx.city) bits.push({ icon: "📍", label: ctx.city });
+  return (
+    <div className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 text-[11px] sm:-mx-6 sm:px-6">
+      {bits.map((b, i) => (
+        <span
+          key={i}
+          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2.5 py-1 text-[var(--color-muted)]"
+        >
+          <span aria-hidden>{b.icon}</span>
+          <span className="capitalize">{b.label}</span>
+        </span>
+      ))}
+    </div>
+  );
+}
+
+function ScoreMicroBars({
+  imdb,
+  rt,
+  meta,
+}: {
+  imdb: number | null;
+  rt: number | null;
+  meta: number | null;
+}) {
+  const rows: { label: string; value: number | null; max: number }[] = [
+    { label: "IMDb", value: imdb, max: 100 },
+    { label: "RT", value: rt, max: 100 },
+    { label: "Meta", value: meta, max: 100 },
+  ];
+  return (
+    <ul className="w-full max-w-[160px] space-y-1.5">
+      {rows.map((r) => {
+        const pct = r.value == null ? 0 : (r.value / r.max) * 100;
+        return (
+          <li key={r.label} className="flex items-center gap-2">
+            <span className="rubric w-9 text-left" style={{ letterSpacing: "0.18em" }}>
+              {r.label}
+            </span>
+            <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-[var(--color-surface-2)]">
+              <span
+                className="absolute inset-y-0 left-0 rounded-full bg-[var(--color-text)]"
+                style={{ width: `${pct}%`, opacity: r.value == null ? 0 : 0.85 }}
+              />
+            </span>
+            <span className="num-data w-6 text-right text-[10px] text-[var(--color-muted)]">
+              {r.value == null ? "—" : Math.round(r.value)}
+            </span>
+          </li>
+        );
+      })}
+    </ul>
+  );
 }

@@ -5,26 +5,44 @@
   --font-mono: var(--font-geist-mono), ui-monospace, monospace;
   --font-display: var(--font-instrument-serif), ui-serif, serif;
 
-  /* Background layers — widened L spread + warm tint shift on elevated surfaces */
-  --color-bg: oklch(0.14 0.012 270);
-  --color-bg-elevated: oklch(0.19 0.014 280);
-  --color-surface: oklch(0.23 0.014 60);
-  --color-surface-2: oklch(0.30 0.014 60);
+  /* ─────────── Cinema room — warm graphite, ember accent ─────────── */
+  --color-bg:            oklch(0.11 0.018 30);         /* #19120e house lights down  */
+  --color-bg-elevated:   oklch(0.16 0.026 28);         /* #261b16 velvet seat row    */
+  --color-surface:       oklch(0.21 0.030 32);         /* #34251e armrest leather    */
+  --color-surface-2:     oklch(0.28 0.028 38);         /* #463429 lit aisle strip    */
+  --color-border:        oklch(0.34 0.022 35 / 0.55);
+  --color-border-strong: oklch(0.48 0.030 35 / 0.85);
 
-  --color-border: oklch(0.34 0.014 270 / 0.6);
-  --color-border-strong: oklch(0.44 0.014 270 / 0.8);
+  /* Signature: every backdrop blends through this (amber undertow) */
+  --color-undertow:      oklch(0.20 0.06 55);          /* warm gold-bronze undertow */
 
-  /* Text — bumped for WCAG AA */
-  --color-text: oklch(0.97 0.005 270);
-  --color-muted: oklch(0.78 0.012 270);   /* ~6.0:1 on bg — passes AA body */
-  --color-subtle: oklch(0.66 0.012 270);  /* >4.5:1 — caption only */
+  /* Text — warm whites */
+  --color-text:          oklch(0.97 0.008 60);         /* projector white */
+  --color-muted:         oklch(0.79 0.014 50);         /* marquee chrome  */
+  --color-subtle:        oklch(0.63 0.018 45);         /* usher's shadow  */
 
-  --color-accent: oklch(0.84 0.16 75);          /* warm amber */
-  --color-accent-soft: oklch(0.84 0.16 75 / 0.18);
-  --color-tomato: oklch(0.7 0.21 25);
-  --color-good: oklch(0.78 0.16 145);
-  --color-warn: oklch(0.84 0.15 75);
-  --color-bad: oklch(0.67 0.22 25);
+  /* Amber accent — the brand */
+  --color-accent:        oklch(0.84 0.16 75);          /* warm amber / gold */
+  --color-accent-soft:   oklch(0.84 0.16 75 / 0.18);
+  --color-accent-wash:   oklch(0.84 0.16 75 / 0.08);
+
+  /* Score-ramp anchors (NEVER UI accent) */
+  --color-good:          oklch(0.74 0.13 155);         /* #6cc89a */
+  --color-warn:          oklch(0.80 0.14 70);          /* #d9b46a */
+  --color-bad:           oklch(0.58 0.21 22);          /* #b73a1f */
+
+  /* Motion vocabulary */
+  --motion-instant:      80ms;
+  --motion-quick:        160ms;
+  --motion-regular:      280ms;
+  --motion-scenic:       520ms;
+  --ease-standard:       cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-entrance:       cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-exit:           cubic-bezier(0.4, 0, 1, 1);
+
+  --radius-tile: 1rem;
+  --radius-card: 1.25rem;
+  --radius-hero: 1.5rem;
 }
 
 html,
@@ -34,96 +52,83 @@ body {
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
+  font-feature-settings: "ss01", "cv11", "calt";
 }
 
 body {
+  /* lobby-lights aura — warm amber + gold whispers */
   background-image:
-    radial-gradient(ellipse 80% 60% at 50% -10%, oklch(0.27 0.04 280 / 0.45), transparent 60%),
-    radial-gradient(ellipse 60% 50% at 90% 110%, oklch(0.26 0.05 25 / 0.22), transparent 70%);
+    radial-gradient(ellipse 80% 60% at 50% -10%, oklch(0.32 0.10 70 / 0.45), transparent 60%),
+    radial-gradient(ellipse 60% 50% at 90% 110%, oklch(0.26 0.09 55 / 0.30), transparent 70%),
+    radial-gradient(ellipse 50% 40% at 5% 80%, oklch(0.20 0.05 38 / 0.22), transparent 70%);
   background-attachment: fixed;
 }
 
 ::selection {
   background: var(--color-accent);
-  color: oklch(0.18 0.01 270);
+  color: oklch(0.16 0.012 50);
 }
 
 * {
   -webkit-tap-highlight-color: transparent;
 }
 
-/* Global focus ring — required for keyboard a11y */
+/* Global focus ring */
 *:focus { outline: none; }
 *:focus-visible {
   outline: 2px solid var(--color-accent);
   outline-offset: 2px;
   border-radius: 0.5rem;
 }
-/* High-contrast ring on top of brand-colored buttons */
 .brand-tile:focus-visible {
   outline: 3px solid white;
   outline-offset: 3px;
 }
 
-@media (max-width: 640px) {
-  input,
-  select,
-  textarea {
-    font-size: 16px;
-  }
+/* Headlines should balance, paragraphs should pretty-wrap. */
+h1, h2, h3, .text-display {
+  text-wrap: balance;
+  hanging-punctuation: first last;
+}
+p {
+  text-wrap: pretty;
 }
 
-/* Respect reduced-motion — neutralize all CSS + framer-motion animations */
-@media (prefers-reduced-motion: reduce) {
-  *,
-  *::before,
-  *::after {
-    animation-duration: 0.001ms !important;
-    animation-iteration-count: 1 !important;
-    transition-duration: 0.001ms !important;
-    scroll-behavior: auto !important;
-  }
+/* Numeric voices */
+.num-data { font-family: var(--font-mono); font-variant-numeric: tabular-nums; }
+.num-prose { font-variant-numeric: oldstyle-nums proportional-nums; }
+.num-hero {
+  font-family: var(--font-display);
+  font-variant-numeric: lining-nums tabular-nums;
+  font-feature-settings: "lnum", "tnum";
 }
 
-*::-webkit-scrollbar {
-  width: 10px;
-  height: 10px;
-}
-*::-webkit-scrollbar-thumb {
-  background: oklch(0.34 0.014 270 / 0.7);
-  border-radius: 9999px;
-}
-*::-webkit-scrollbar-track {
-  background: transparent;
+/* Rubric — small caps eyebrows used across hero/sections */
+.rubric {
+  font-size: 11px;
+  letter-spacing: 0.22em;
+  text-transform: uppercase;
+  color: var(--color-muted);
+  font-weight: 500;
 }
 
-@keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+/* The signature: warm undertow blend layered over any backdrop image */
+.backdrop-undertow {
+  position: relative;
+  isolation: isolate;
 }
-.shimmer {
-  background: linear-gradient(
-    90deg,
-    oklch(0.23 0.014 60) 0%,
-    oklch(0.30 0.014 60) 50%,
-    oklch(0.23 0.014 60) 100%
-  );
-  background-size: 200% 100%;
-  animation: shimmer 1.8s linear infinite;
-}
-
-@keyframes fadeInUp {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
-}
-.fade-in-up {
-  animation: fadeInUp 280ms cubic-bezier(0.2, 0.7, 0.2, 1) both;
+.backdrop-undertow::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  z-index: 1;
+  background: var(--color-undertow);
+  mix-blend-mode: multiply;
+  opacity: 0.55;
+  pointer-events: none;
 }
 
-.no-scrollbar::-webkit-scrollbar { display: none; }
-.no-scrollbar { scrollbar-width: none; }
-
-/* Reusable utility for visually-hidden text */
+/* SR-only */
 .sr-only {
   position: absolute;
   width: 1px;
@@ -135,3 +140,53 @@ body {
   white-space: nowrap;
   border: 0;
 }
+
+@media (max-width: 640px) {
+  input, select, textarea { font-size: 16px; }
+}
+
+/* Reduced-motion: substitute static end-states everywhere */
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.001ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.001ms !important;
+    scroll-behavior: auto !important;
+  }
+}
+
+/* Scrollbars */
+*::-webkit-scrollbar { width: 10px; height: 10px; }
+*::-webkit-scrollbar-thumb {
+  background: oklch(0.34 0.022 35 / 0.55);
+  border-radius: 9999px;
+}
+*::-webkit-scrollbar-track { background: transparent; }
+
+/* Skeletons */
+@keyframes shimmer {
+  0% { background-position: -200% 0; }
+  100% { background-position: 200% 0; }
+}
+.shimmer {
+  background: linear-gradient(
+    90deg,
+    oklch(0.21 0.030 32) 0%,
+    oklch(0.28 0.028 38) 50%,
+    oklch(0.21 0.030 32) 100%
+  );
+  background-size: 200% 100%;
+  animation: shimmer 1.8s linear infinite;
+}
+
+/* Marquee bulb pulse — one bulb softly pulsing on empty states */
+@keyframes bulbPulse {
+  0%, 100% { opacity: 0.35; filter: drop-shadow(0 0 0 transparent); }
+  50% { opacity: 1; filter: drop-shadow(0 0 8px var(--color-accent)); }
+}
+.bulb-pulse {
+  animation: bulbPulse 2.4s ease-in-out infinite;
+}
+
+.no-scrollbar::-webkit-scrollbar { display: none; }
+.no-scrollbar { scrollbar-width: none; }

@@ -1,10 +1,12 @@
 "use client";
-import { motion, AnimatePresence } from "motion/react";
+import Image from "next/image";
+import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { Check } from "lucide-react";
 import { toast } from "sonner";
-import { PROVIDERS } from "@/lib/providers";
+import { PROVIDERS, providerCatalogLogo, type ProviderDef } from "@/lib/providers";
 import { getBrandSwatch } from "@/lib/providerBrands";
 import { useSelectedProviders } from "@/hooks/useSelectedProviders";
+import { dur, ease, springSnap } from "@/lib/motion";
 import { cn } from "@/lib/cn";
 
 export function ProviderSelector({
@@ -13,94 +15,51 @@ export function ProviderSelector({
   variant?: "grid" | "chips";
 }) {
   const { selected, toggle, setSelected, hydrated } = useSelectedProviders();
+  const reduce = useReducedMotion();
 
   const handleToggle = (key: string, name: string) => {
     const wasOn = selected.includes(key);
     toggle(key);
-    toast.success(wasOn ? `Removed ${name}` : `Added ${name}`, { duration: 1400 });
+    toast.success(wasOn ? `Removed ${name}` : `Added ${name}`, { duration: 1100 });
   };
 
   if (variant === "chips") {
     return (
       <div className="flex flex-wrap gap-1.5">
-        {PROVIDERS.map((p) => {
-          const on = hydrated && selected.includes(p.key);
-          const brand = getBrandSwatch(p.key);
-          return (
-            <motion.button
-              key={p.key}
-              type="button"
-              whileTap={{ scale: 0.95 }}
-              onClick={() => handleToggle(p.key, p.name)}
-              className={cn(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-xs font-medium transition",
-                on
-                  ? "border-transparent text-white"
-                  : "border-[var(--color-border)] bg-[var(--color-surface)]/50 text-[var(--color-muted)] hover:border-[var(--color-border-strong)]",
-              )}
-              style={on ? { background: brand.bg } : undefined}
-              aria-pressed={on}
-            >
-              {on && <Check className="h-3 w-3" strokeWidth={3} />}
-              {p.short}
-            </motion.button>
-          );
-        })}
+        {PROVIDERS.map((p) => (
+          <ProviderChip
+            key={p.key}
+            provider={p}
+            on={hydrated && selected.includes(p.key)}
+            onClick={() => handleToggle(p.key, p.name)}
+            reduce={!!reduce}
+          />
+        ))}
       </div>
     );
   }
 
   return (
-    <div className="space-y-4">
-      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
+    <div className="space-y-5">
+      <ul className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4" role="group" aria-label="Streaming services">
         {PROVIDERS.map((p) => {
           const on = hydrated && selected.includes(p.key);
-          const brand = getBrandSwatch(p.key);
-          const fgClass = brand.fg === "light" ? "text-white" : "text-zinc-900";
           return (
-            <motion.button
-              key={p.key}
-              type="button"
-              whileHover={{ y: -2, scale: 1.02 }}
-              whileTap={{ scale: 0.96 }}
-              transition={{ duration: 0.15 }}
-              onClick={() => handleToggle(p.key, p.name)}
-              className="group relative flex aspect-[4/3] flex-col items-center justify-center overflow-hidden rounded-2xl text-center"
-              style={{
-                background: brand.bg,
-                boxShadow: on
-                  ? `0 0 0 3px var(--color-accent), 0 20px 40px -10px ${brand.glow ?? brand.bg}`
-                  : "0 1px 0 0 oklch(0.32 0.014 270 / 0.5) inset",
-              }}
-              aria-pressed={on}
-            >
-              <AnimatePresence>
-                {on && (
-                  <motion.span
-                    initial={{ scale: 0.5, opacity: 0 }}
-                    animate={{ scale: 1, opacity: 1 }}
-                    exit={{ scale: 0.5, opacity: 0 }}
-                    transition={{ type: "spring", stiffness: 300, damping: 22 }}
-                    className="absolute right-2 top-2 inline-flex h-6 w-6 items-center justify-center rounded-full bg-white text-zinc-900"
-                  >
-                    <Check className="h-3.5 w-3.5" strokeWidth={3} />
-                  </motion.span>
-                )}
-              </AnimatePresence>
-              <span className={cn("px-2 text-base font-bold leading-tight", fgClass)}>
-                {p.short}
-              </span>
-              <span className={cn("mt-1 text-[10px] uppercase tracking-wider opacity-70", fgClass)}>
-                {p.kinds[0] === "flatrate" ? "Subscription" : p.kinds.includes("rent") ? "Rent / Buy" : p.kinds.join(", ")}
-              </span>
-            </motion.button>
+            <li key={p.key}>
+              <ProviderSurfaceTile
+                provider={p}
+                on={on}
+                onClick={() => handleToggle(p.key, p.name)}
+                reduce={!!reduce}
+              />
+            </li>
           );
         })}
-      </div>
+      </ul>
       <div className="flex items-center justify-between text-xs text-[var(--color-muted)]">
         <span>
           {hydrated
-            ? `${selected.length} selected`
+            ? `${selected.length} ${selected.length === 1 ? "service" : "services"} selected`
             : "Loading your services…"}
         </span>
         {hydrated && selected.length > 0 && (
@@ -117,5 +76,122 @@ export function ProviderSelector({
         )}
       </div>
     </div>
+  );
+}
+
+function ProviderSurfaceTile({
+  provider,
+  on,
+  onClick,
+  reduce,
+}: {
+  provider: ProviderDef;
+  on: boolean;
+  onClick: () => void;
+  reduce: boolean;
+}) {
+  const brand = getBrandSwatch(provider.key);
+  const logoUrl = providerCatalogLogo(provider);
+  const isFlat = provider.kinds.includes("flatrate");
+  return (
+    <motion.button
+      type="button"
+      onClick={onClick}
+      whileTap={reduce ? undefined : { scale: 0.98 }}
+      transition={{ duration: dur.quick }}
+      aria-pressed={on}
+      aria-label={`${provider.name}, ${on ? "selected" : "not selected"}`}
+      className={cn(
+        "group relative flex h-full w-full items-center gap-3 overflow-hidden rounded-[var(--radius-tile)] p-3 text-left transition",
+        on
+          ? "border-[var(--color-accent)]"
+          : "border-[var(--color-border)] hover:border-[var(--color-border-strong)]",
+        "border bg-[var(--color-surface)]/60",
+      )}
+      style={{
+        background: on
+          ? `linear-gradient(135deg, var(--color-accent-wash), transparent 60%), var(--color-surface)`
+          : undefined,
+      }}
+    >
+      {/* Logo badge with 8% brand wash backdrop */}
+      <span
+        aria-hidden
+        className="relative grid h-12 w-12 shrink-0 place-items-center overflow-hidden rounded-xl ring-1 ring-white/5"
+        style={{ background: `${brand.bg}1f` }}
+      >
+        <Image
+          src={logoUrl}
+          alt=""
+          width={48}
+          height={48}
+          className="h-full w-full object-contain p-1.5"
+          unoptimized
+        />
+      </span>
+      <div className="min-w-0 flex-1">
+        <div className="truncate text-sm font-semibold text-[var(--color-text)]">
+          {provider.name}
+        </div>
+        <div className="rubric mt-0.5" style={{ letterSpacing: "0.18em" }}>
+          {isFlat ? "Subscription" : "Rent · Buy"}
+        </div>
+      </div>
+      <AnimatePresence>
+        {on && (
+          <motion.span
+            key="check"
+            initial={reduce ? false : { scale: 0.5, opacity: 0 }}
+            animate={{ scale: 1, opacity: 1 }}
+            exit={reduce ? undefined : { scale: 0.5, opacity: 0 }}
+            transition={springSnap}
+            className="inline-flex h-6 w-6 items-center justify-center rounded-full bg-[var(--color-accent)] text-[var(--color-bg)]"
+            aria-hidden
+          >
+            <Check className="h-3.5 w-3.5" strokeWidth={3} />
+          </motion.span>
+        )}
+      </AnimatePresence>
+    </motion.button>
+  );
+}
+
+function ProviderChip({
+  provider,
+  on,
+  onClick,
+  reduce,
+}: {
+  provider: ProviderDef;
+  on: boolean;
+  onClick: () => void;
+  reduce: boolean;
+}) {
+  const brand = getBrandSwatch(provider.key);
+  const logoUrl = providerCatalogLogo(provider);
+  return (
+    <motion.button
+      type="button"
+      whileTap={reduce ? undefined : { scale: 0.96 }}
+      transition={{ duration: dur.quick, ease: ease.entrance }}
+      onClick={onClick}
+      aria-pressed={on}
+      className={cn(
+        "inline-flex items-center gap-1.5 rounded-full border py-1 pl-1 pr-3 text-xs font-medium transition",
+        on
+          ? "border-[var(--color-accent)] bg-[var(--color-accent-wash)] text-[var(--color-text)]"
+          : "border-[var(--color-border)] bg-[var(--color-surface)]/50 text-[var(--color-muted)] hover:border-[var(--color-border-strong)]",
+      )}
+    >
+      <span
+        aria-hidden
+        className="grid h-5 w-5 place-items-center overflow-hidden rounded-md"
+        style={{ background: `${brand.bg}1f` }}
+      >
+        <Image src={logoUrl} alt="" width={20} height={20} className="h-full w-full object-contain" unoptimized />
+      </span>
+      {provider.short}
+      {on && <Check className="h-3 w-3 text-[var(--color-accent)]" strokeWidth={3} />}
+    </motion.button>
   );
 }
