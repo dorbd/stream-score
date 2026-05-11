@@ -41,6 +41,8 @@ interface TonightContext {
   weather: string;
   isDark: boolean;
   holiday: string | null;
+  wildRubric?: string | null;
+  keywordHints?: string[];
 }
 
 type Tab = "discover" | "tonight" | "watchlist";
@@ -858,16 +860,26 @@ function TonightContextBar({ ctx }: { ctx: TonightContext }) {
   }
   if (ctx.city) bits.push({ icon: "📍", label: ctx.city });
   return (
-    <div className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 text-[11px] sm:-mx-6 sm:px-6">
-      {bits.map((b, i) => (
-        <span
-          key={i}
-          className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2.5 py-1 text-[var(--color-muted)]"
-        >
-          <span aria-hidden>{b.icon}</span>
-          <span className="capitalize">{b.label}</span>
-        </span>
-      ))}
+    <div className="space-y-2">
+      <div className="no-scrollbar -mx-4 flex items-center gap-1.5 overflow-x-auto px-4 text-[11px] sm:-mx-6 sm:px-6">
+        {bits.map((b, i) => (
+          <span
+            key={i}
+            className="inline-flex shrink-0 items-center gap-1 rounded-full border border-[var(--color-border)] bg-[var(--color-bg-elevated)] px-2.5 py-1 text-[var(--color-muted)]"
+          >
+            <span aria-hidden>{b.icon}</span>
+            <span className="capitalize">{b.label}</span>
+          </span>
+        ))}
+      </div>
+      {ctx.wildRubric && (
+        <div className="flex items-start gap-2 rounded-2xl border border-[var(--color-border)] bg-[var(--color-bg-elevated)]/60 p-3 text-[12px] text-[var(--color-text)]/85">
+          <span className="rubric shrink-0" style={{ color: "var(--color-accent)", letterSpacing: "0.22em" }}>
+            Today
+          </span>
+          <span className="italic">{ctx.wildRubric}</span>
+        </div>
+      )}
     </div>
   );
 }

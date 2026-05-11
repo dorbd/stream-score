@@ -7,6 +7,7 @@ import { getAmbientContext } from "@/lib/ambientContext";
 import { getCulturalContext } from "@/lib/culturalContext";
 import { classifyDaypart, DAYPART_BIAS } from "@/lib/daypart";
 import { rerank, reasonSentence } from "@/lib/rerank";
+import { getWildSignals, getTributeMovieIds } from "@/lib/wildSignals";
 import type { MovieResult } from "@/lib/types";
 
 function parseList(v: string | null): string[] {
@@ -32,9 +33,14 @@ export async function GET(req: NextRequest) {
     primeGenreCache(genres);
 
     // Fetch parallel context.
-    const [ambient, cultural] = await Promise.all([
+    const [ambient, cultural, wild] = await Promise.all([
       getAmbientContext({ lat: reqCtx.lat, lng: reqCtx.lng }),
       getCulturalContext(),
+      getWildSignals(),
+    ]);
+    const tributeMovieIds = await getTributeMovieIds([
+      ...wild.bornTodayIds,
+      ...wild.diedTodayIds,
     ]);
 
     const dp = classifyDaypart(reqCtx.hourLocal, reqCtx.dayOfWeek);
@@ -93,6 +99,9 @@ export async function GET(req: NextRequest) {
       ambient,
       cultural,
       locale: reqCtx.locale,
+      wildGenreBoosts: wild.genreBoosts,
+      wildKeywordHints: wild.keywordHints,
+      tributeMovieIds,
     });
 
     const top = rankings.slice(0, 12).map((r) => ({
@@ -119,6 +128,8 @@ export async function GET(req: NextRequest) {
         weather: ambient.outdoorVibe,
         isDark: ambient.isDark,
         holiday: ambient.holiday,
+        wildRubric: wild.rubric,
+        keywordHints: wild.keywordHints,
       },
     });
   } catch (e) {

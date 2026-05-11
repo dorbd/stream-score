@@ -17,6 +17,12 @@ export interface RerankInput {
   ambient: AmbientContext;
   cultural: CulturalContext;
   locale: string;
+  /** TMDb genre id -> [0,1] bump from wild signals (history, NASA, etc.). */
+  wildGenreBoosts?: Record<number, number>;
+  /** Lower-cased keywords; movies whose overview matches get a small bonus. */
+  wildKeywordHints?: string[];
+  /** TMDb movie ids tied to a person born/died today — tribute boost. */
+  tributeMovieIds?: Set<number>;
 }
 
 export interface Reason {
@@ -41,6 +47,9 @@ const W = {
   trending: 3,
   anniversary: 2,
   locale: 2,
+  wildGenre: 3,
+  wildKeyword: 2,
+  tribute: 4,
 } as const;
 
 const BOOST_CAP = 15;
@@ -109,6 +118,21 @@ export function rerank(input: RerankInput): RankedMovie[] {
           : 0;
       const watchlistBoost = input.watchlistIds.has(m.tmdbId) ? 0.5 : 0;
 
+      // Wild signals
+      let wildGenre = 0;
+      if (input.wildGenreBoosts) {
+        for (const gid of genreIds) {
+          wildGenre = Math.max(wildGenre, input.wildGenreBoosts[gid] ?? 0);
+        }
+      }
+      let wildKeyword = 0;
+      if (input.wildKeywordHints?.length && m.overview) {
+        const ov = m.overview.toLowerCase();
+        const matched = input.wildKeywordHints.filter((k) => ov.includes(k));
+        if (matched.length > 0) wildKeyword = Math.min(1, 0.4 + 0.2 * (matched.length - 1));
+      }
+      const tribute = input.tributeMovieIds?.has(m.tmdbId) ? 1 : 0;
+
       const raw =
         wProvider * pm.score +
         wDaypart * dpFit +
@@ -116,6 +140,9 @@ export function rerank(input: RerankInput): RankedMovie[] {
         wTrending * trend +
         W.anniversary * ann +
         W.locale * localeFit +
+        W.wildGenre * wildGenre +
+        W.wildKeyword * wildKeyword +
+        W.tribute * tribute +
         watchlistBoost;
 
       const boost = clamp(raw, -BOOST_CAP, BOOST_CAP);
@@ -153,6 +180,9 @@ export function rerank(input: RerankInput): RankedMovie[] {
         push("anniversary", W.anniversary, years ? `${years}-year anniversary today` : "anniversary today");
       }
       if (watchlistBoost) push("watchlist", watchlistBoost, "in your watchlist");
+      if (tribute) push("tribute", W.tribute, "tribute pick for someone born or remembered today");
+      if (wildGenre >= 0.4) push("wild", W.wildGenre * wildGenre, "matches today's vibe in the news");
+      else if (wildKeyword >= 0.4) push("wild", W.wildKeyword * wildKeyword, "echoes something happening today");
       reasons.sort((a, b) => Math.abs(b.magnitude) - Math.abs(a.magnitude));
       return { movie: m, base, boost, finalScore, daypart: dp, reasons: reasons.slice(0, 3) };
     })
