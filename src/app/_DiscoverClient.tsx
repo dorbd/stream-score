@@ -21,6 +21,10 @@ import { useWatchlist, useHidden } from "@/hooks/useLocalSet";
 import { HeroCard } from "@/components/HeroCard";
 import { AnchorPrompt } from "@/components/AnchorPrompt";
 import { useAnchor } from "@/lib/anchor";
+import { useStoredDna } from "@/lib/dna/storage";
+import { buildRails } from "@/lib/dna/rails";
+import { Rail } from "@/components/Rail";
+import { DnaBanner } from "@/components/dna/DnaBanner";
 import { PROVIDER_BY_KEY } from "@/lib/providers";
 import { getBrandSwatch } from "@/lib/providerBrands";
 import { MOODS } from "@/lib/moods";
@@ -63,6 +67,7 @@ export function DiscoverClient({
    */
   const [yearBucket, setYearBucket] = useState<string>("any");
   const { anchor, hydrated: anchorHydrated } = useAnchor();
+  const { dna, hydrated: dnaHydrated } = useStoredDna();
   const [anchorPromptOpen, setAnchorPromptOpen] = useState(false);
   const prevHiddenCountRef = useRef(0);
   const [results, setResults] = useState<MovieResult[]>([]);
@@ -213,6 +218,9 @@ export function DiscoverClient({
   useEffect(() => {
     if (showOnboarding) return;
     if (tab === "watchlist") return;
+    // When DNA is present, the Discover tab is rendered as <Rail> stack and
+    // the grid is hidden — skip the discover fetch entirely on that path.
+    if (tab === "discover" && dnaHydrated && dna) return;
     if (debounceRef.current) clearTimeout(debounceRef.current);
     debounceRef.current = setTimeout(() => {
       fetchResults({ page: 1, reset: true });
@@ -220,7 +228,7 @@ export function DiscoverClient({
     return () => {
       if (debounceRef.current) clearTimeout(debounceRef.current);
     };
-  }, [fetchResults, showOnboarding, tab, filters.query]);
+  }, [fetchResults, showOnboarding, tab, filters.query, dna, dnaHydrated]);
 
   const selectedDefs = useMemo(
     () => selected.map((k) => PROVIDER_BY_KEY[k]).filter(Boolean),
@@ -245,6 +253,14 @@ export function DiscoverClient({
     (moodKey ? 1 : 0) +
     (timeBudget !== "any" ? 1 : 0) +
     (yearBucket !== "any" ? 1 : 0);
+
+  // For-You rails (Discover replacement) — only computed when DNA exists.
+  // We memo on dna.archetype + provider list so a Retake or a new service
+  // pick recomputes the rail set without re-running on every render.
+  const rails = useMemo(() => {
+    if (!dnaHydrated || !dna) return null;
+    return buildRails(dna, selected);
+  }, [dna, dnaHydrated, selected]);
 
   // Tonight tab — fetch atmosphere context (daypart, weather, "on this day").
   // The HeroCard itself fetches /api/daily-pick for the LLM-curated pick.
@@ -439,8 +455,9 @@ export function DiscoverClient({
         ))}
       </div>
 
-      {/* Mood chips (Discover + Tonight only) */}
-      {tab !== "watchlist" && (
+      {/* Mood chips (Discover + Tonight only).
+          Hidden when rails are active — they don't read mood state. */}
+      {tab !== "watchlist" && !(tab === "discover" && rails) && (
         <div className="-mx-4 px-4 sm:-mx-6 sm:px-6">
           <div className="mb-2 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)]">
             What are you in the mood for?
@@ -471,8 +488,10 @@ export function DiscoverClient({
         </div>
       )}
 
-      {/* Search + sort + filter + time + onlyMine */}
-      {tab !== "watchlist" && (
+      {/* Search + sort + filter + time + onlyMine.
+          Hidden on Discover when rails are active — the rails are pre-curated
+          and don't respond to these controls. */}
+      {tab !== "watchlist" && !(tab === "discover" && rails) && (
         <div className="sticky top-[60px] z-20 -mx-4 border-y border-[var(--color-border)] bg-[var(--color-bg)]/85 px-4 py-2 backdrop-blur-xl sm:-mx-6 sm:px-6">
           <div className="flex items-center gap-2">
             <div className="relative flex-1">
@@ -646,8 +665,20 @@ export function DiscoverClient({
         </section>
       )}
 
-      {/* Discover grid */}
-      {tab === "discover" && (
+      {/* Discover — For-You rails view when DNA is set, else fall through to grid */}
+      {tab === "discover" && rails && rails.length > 0 && (
+        <section className="space-y-6" aria-label="Picked for you">
+          <DnaBanner />
+          <div className="space-y-8">
+            {rails.map((spec) => (
+              <Rail key={spec.id} spec={spec} selectedProviderKeys={selected} />
+            ))}
+          </div>
+        </section>
+      )}
+
+      {/* Discover grid (legacy / cold-start without DNA) */}
+      {tab === "discover" && !rails && (
         <section className="space-y-3">
           <div className="flex items-center justify-between text-xs text-[var(--color-muted)]" role="status" aria-live="polite" aria-atomic="true">
             <span>

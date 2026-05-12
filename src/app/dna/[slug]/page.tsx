@@ -1,13 +1,12 @@
 // /dna/[slug] — the reveal page. Server component.
 //
-// Validates the slug against archetypes.json, fetches the 60-word reveal
-// paragraph from Agent 5's /api/reveal route, and renders the editorial layout:
-//   - Hero: archetype name in Instrument Serif, italic accent.
-//   - Anchor film poster + director name.
-//   - 60-word reveal paragraph.
-//   - <DimChart /> (client) for the 7-axis viz.
-//   - "Re-rank my feed →" CTA → /.
-//   - "Share" button (client island) copies a tokenized URL.
+// Editorial layout:
+//   1. Eyebrow "Your stream·score DNA"
+//   2. Hero — archetype name in Instrument Serif, italic accent on the last word.
+//   3. Anchor poster + 35–45 word paragraph (Groq via /api/reveal).
+//   4. <TasteSignature /> chips — three emoji chips from the user's vector.
+//   5. <EvidenceRow /> — three signature films.
+//   6. CTA row: primary "Re-rank my feed →", secondary "Share · Take it again".
 
 import Image from "next/image";
 import Link from "next/link";
@@ -16,7 +15,8 @@ import { notFound } from "next/navigation";
 import { ArrowRight } from "lucide-react";
 import archetypesData from "../../../../data/dna/archetypes.json";
 import { posterUrl } from "@/lib/tmdbClient";
-import { DimChart } from "@/components/dna/DimChart";
+import { TasteSignature } from "@/components/dna/TasteSignature";
+import { EvidenceRow } from "@/components/dna/EvidenceRow";
 import { RevealClient } from "./_RevealClient";
 
 export const dynamic = "force-dynamic";
@@ -28,18 +28,17 @@ interface Archetype {
   anchorFilm: { title: string; tmdbId: number; year: number };
   anchorDirector: string;
   centroid: number[];
+  signatureFilms?: number[];
 }
 
 const ARCHETYPES = archetypesData as unknown as Archetype[];
 
-// Reveal-text contract: Agent 5 owns /api/reveal?archetype=KEY → { paragraph: string }.
+// Reveal-text contract: /api/reveal?archetype=KEY → { paragraph: string }.
 // We tolerate failure (graceful fallback to tagline) so the page never errors.
 async function getRevealParagraph(key: string): Promise<string | null> {
   try {
-    // Server components can't fetch via relative URLs; build an absolute one
-    // from the request headers. NEXT_PUBLIC_SITE_URL overrides if set.
     const base = await siteOrigin();
-    const url = `${base}/api/reveal?archetype=${encodeURIComponent(key)}`;
+    const url = `${base}/api/reveal?archetype=${encodeURIComponent(key)}&max_words=35`;
     const res = await fetch(url, { cache: "no-store" });
     if (!res.ok) return null;
     const j = (await res.json()) as { paragraph?: string };
@@ -57,9 +56,6 @@ async function siteOrigin(): Promise<string> {
   return `${proto}://${host}`;
 }
 
-// Anchor film poster — TMDb's poster endpoint lives at /movie/{id} but we don't
-// have a guarantee Agent 4 wired up a cache. We fetch the bare poster_path
-// from TMDb directly; if it fails we render a gradient placeholder.
 async function getAnchorPosterPath(tmdbId: number): Promise<string | null> {
   const key = process.env.TMDB_API_KEY || process.env.NEXT_PUBLIC_TMDB_API_KEY;
   if (!key) return null;
@@ -76,8 +72,6 @@ async function getAnchorPosterPath(tmdbId: number): Promise<string | null> {
   }
 }
 
-// Italicize the most distinctive word in the archetype name. Heuristic:
-// the last word if 2+ words, otherwise the whole name.
 function nameParts(name: string): { lead: string; accent: string } {
   const parts = name.trim().split(/\s+/);
   if (parts.length <= 1) return { lead: "", accent: name };
@@ -115,13 +109,13 @@ export default async function DnaRevealPage({ params }: PageProps) {
 
   return (
     <article className="relative space-y-10 pb-16 pt-2 sm:space-y-14 sm:pt-6">
-      {/* Eyebrow */}
+      {/* 1. Eyebrow */}
       <div className="num-prose flex items-center gap-2 text-[11px] uppercase tracking-[0.22em] text-[var(--color-subtle)]">
         <span className="h-1 w-6 rounded-full bg-[var(--color-accent)]" />
         <span>Your stream·score DNA</span>
       </div>
 
-      {/* Hero */}
+      {/* 2. Hero */}
       <header className="space-y-5">
         <h1 className="font-display text-[52px] leading-[0.92] tracking-[-0.01em] text-[var(--color-text)] sm:text-7xl">
           {lead && (
@@ -136,7 +130,7 @@ export default async function DnaRevealPage({ params }: PageProps) {
         </p>
       </header>
 
-      {/* Anchor film + reveal paragraph + share */}
+      {/* 3. Anchor poster + paragraph */}
       <section className="grid gap-6 sm:grid-cols-[180px_1fr] sm:gap-10">
         <div>
           <div className="relative aspect-[2/3] w-full overflow-hidden rounded-[var(--radius-card)] border border-[var(--color-border)] bg-[var(--color-bg-elevated)] shadow-[0_18px_50px_-30px_rgba(0,0,0,0.85)]">
@@ -172,47 +166,42 @@ export default async function DnaRevealPage({ params }: PageProps) {
         </div>
 
         <div className="space-y-6">
-          {paragraph ? (
-            <p className="font-display max-w-prose text-[18px] leading-relaxed text-[var(--color-text)]/90 sm:text-[20px]">
-              {paragraph}
-            </p>
-          ) : (
-            <p className="font-display max-w-prose text-[18px] leading-relaxed text-[var(--color-text)]/90 sm:text-[20px]">
-              {archetype.tagline}
-            </p>
-          )}
-
-          <RevealClient archetypeKey={archetype.key} archetypeName={archetype.name} />
+          <p className="font-display max-w-prose text-[18px] leading-relaxed text-[var(--color-text)]/90 sm:text-[20px]">
+            {paragraph ?? archetype.tagline}
+          </p>
         </div>
       </section>
 
-      {/* Dim chart */}
-      <section className="space-y-4">
-        <div className="num-prose text-[11px] uppercase tracking-[0.22em] text-[var(--color-subtle)]">
-          Your seven axes
+      {/* 4. Taste signature chips */}
+      <section className="space-y-3">
+        <div className="num-prose text-[10px] uppercase tracking-[0.22em] text-[var(--color-subtle)]">
+          Your taste signature
         </div>
-        <DimChart vector={archetype.centroid} />
-        <p className="text-[12px] text-[var(--color-subtle)]">
-          Above shows your archetype&apos;s centroid. Your exact vector is stored
-          locally and used to re-rank every list.
-        </p>
+        <TasteSignature vector={archetype.centroid} />
       </section>
 
-      {/* Footer CTA */}
-      <section className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+      {/* 5. Films in your DNA */}
+      <EvidenceRow archetype={archetype} />
+
+      {/* 6. CTA + share row */}
+      <section className="flex flex-col gap-4 pt-2 sm:flex-row sm:items-center sm:justify-between">
         <Link
           href="/"
-          className="group inline-flex items-center gap-2 rounded-full bg-[var(--color-accent)] px-5 py-3 text-[15px] font-medium text-black/90 transition hover:brightness-110"
+          className="group inline-flex items-center justify-center gap-2 rounded-full bg-[var(--color-accent)] px-5 py-3 text-[15px] font-medium text-black/90 transition hover:brightness-110"
         >
           Re-rank my feed
           <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-0.5" />
         </Link>
-        <Link
-          href="/dna"
-          className="text-[13px] text-[var(--color-subtle)] underline-offset-4 hover:text-[var(--color-muted)] hover:underline"
-        >
-          Retake the test
-        </Link>
+        <div className="flex items-center gap-3 text-[13px] text-[var(--color-subtle)]">
+          <RevealClient archetypeKey={archetype.key} archetypeName={archetype.name} />
+          <span aria-hidden>·</span>
+          <Link
+            href="/dna"
+            className="underline-offset-4 hover:text-[var(--color-muted)] hover:underline"
+          >
+            Take it again
+          </Link>
+        </div>
       </section>
     </article>
   );

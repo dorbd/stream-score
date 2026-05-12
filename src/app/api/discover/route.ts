@@ -14,6 +14,60 @@ function parseNum(v: string | null): number | undefined {
   return Number.isFinite(n) ? n : undefined;
 }
 
+/**
+ * Decode `?dna=<base64url>` into a number[7] in [-1, 1] or null on failure.
+ * Mirrors the decoder in /api/tonight: 7 × Float32 LE = 28 bytes → ~38 chars.
+ */
+function decodeUserDna(v: string | null): number[] | null {
+  if (!v) return null;
+  try {
+    const normalized = v.replace(/-/g, "+").replace(/_/g, "/");
+    const buf = Buffer.from(normalized, "base64");
+    if (buf.byteLength < 28) return null;
+    const view = new DataView(buf.buffer, buf.byteOffset, 28);
+    const out: number[] = new Array(7);
+    for (let i = 0; i < 7; i++) {
+      const f = view.getFloat32(i * 4, true);
+      if (!Number.isFinite(f)) return null;
+      out[i] = Math.max(-1, Math.min(1, f));
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
+/**
+ * Soft DNA boost for the "best" sort. We can't rerank without per-movie
+ * dnaProfile (which the discover route doesn't compute for cost reasons),
+ * but we can favor titles whose `originalLanguage` and `year` line up with
+ * the user's `familiarForeign` and `modernClassic` leans.
+ *
+ * Returns a number in roughly [-2, +2] added to the sort key.
+ */
+function softDnaScore(
+  movie: { originalLanguage: string; year: number | null },
+  userDna: number[],
+): number {
+  const modernClassic = userDna[1] ?? 0; // + modern, - classic
+  const familiarForeign = userDna[6] ?? 0; // + familiar, - foreign
+
+  let score = 0;
+
+  // Modern lean → 2010+ titles get a small bump; classic lean → pre-1990.
+  if (movie.year != null) {
+    if (modernClassic >= 0.3 && movie.year >= 2010) score += 0.6 * modernClassic;
+    else if (modernClassic <= -0.3 && movie.year < 1990) score += 0.6 * Math.abs(modernClassic);
+  }
+
+  // Familiar lean → English titles get a bump; foreign-curious lean → non-English.
+  const isEn = movie.originalLanguage?.toLowerCase() === "en";
+  if (familiarForeign >= 0.3 && isEn) score += 0.5 * familiarForeign;
+  else if (familiarForeign <= -0.3 && !isEn) score += 0.5 * Math.abs(familiarForeign);
+
+  return score;
+}
+
 const SORT_MAP: Record<string, string> = {
   best: "vote_average.desc", // changed: use rating-sorted discovery (with vote_count floor) for "best"
   popular: "popularity.desc",
@@ -49,6 +103,7 @@ export async function GET(req: NextRequest) {
     const query = sp.get("q")?.trim() || undefined;
     const hiddenIds = new Set(parseList(sp.get("hide")).map((s) => Number(s)).filter(Boolean));
     const watchProviderIds = includeOnlyMine && tmdbProviderIds.length ? tmdbProviderIds : undefined;
+    const userDna = decodeUserDna(sp.get("dna"));
 
     // Pre-load genre catalogue so cards always show genre names even when we skip detail fetches.
     const genres = await getMovieGenres().catch(() => []);
@@ -106,9 +161,17 @@ export async function GET(req: NextRequest) {
     if (sortKey === "best") {
       const userKeys = new Set(selectedKeys);
       results.sort((a, b) => {
-        const av = a.ratings.combined ?? a.ratings.audience ?? -1;
-        const bv = b.ratings.combined ?? b.ratings.audience ?? -1;
-        if (bv !== av) return bv - av;
+        const aBase = a.ratings.combined ?? a.ratings.audience ?? -1;
+        const bBase = b.ratings.combined ?? b.ratings.audience ?? -1;
+        const aDna = userDna
+          ? softDnaScore({ originalLanguage: a.originalLanguage, year: a.year }, userDna)
+          : 0;
+        const bDna = userDna
+          ? softDnaScore({ originalLanguage: b.originalLanguage, year: b.year }, userDna)
+          : 0;
+        const av = aBase + aDna;
+        const bv = bBase + bDna;
+        if (Math.abs(bv - av) > 0.01) return bv - av;
         // Tiebreak: movies on the user's services win.
         const aOn = a.availability.flatrate.some((p) => userKeys.has(p.key)) ? 1 : 0;
         const bOn = b.availability.flatrate.some((p) => userKeys.has(p.key)) ? 1 : 0;

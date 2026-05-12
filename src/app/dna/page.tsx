@@ -48,6 +48,8 @@ interface PromptOption {
   label: string;
   subtitle?: string;
   still?: { description: string; colorHint: string };
+  posterUrl?: string;
+  dominantColor?: string;
 }
 
 interface PromptQuestion {

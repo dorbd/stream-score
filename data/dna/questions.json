@@ -3,16 +3,26 @@
     "id": "q1",
     "kind": "movie_pair",
     "prompt": "It's 9pm Friday. Which one are you pressing play on right now — not next weekend, *tonight*?",
-    "a": { "label": "The Grand Budapest Hotel", "subtitle": "Wes Anderson, 2014" },
-    "b": { "label": "Mad Max: Fury Road", "subtitle": "George Miller, 2015" },
+    "a": {
+      "label": "The Grand Budapest Hotel",
+      "subtitle": "Wes Anderson, 2014",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/eWdyYQreja6JGCzqHWXpWHDrrPo.jpg",
+      "dominantColor": "#e8a4ad"
+    },
+    "b": {
+      "label": "Mad Max: Fury Road",
+      "subtitle": "George Miller, 2015",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/hA2ple9q4qnwxp3hKVNhroipsir.jpg",
+      "dominantColor": "#c25021"
+    },
     "duplicateOf": null
   },
   {
     "id": "q2",
     "kind": "general",
-    "prompt": "The group chat is picking tonight's movie. You: …",
-    "a": { "label": "Push hard for the one nobody's seen", "subtitle": "Evangelist energy" },
-    "b": { "label": "Suggest the comfort rewatch everyone will enjoy", "subtitle": "Keep the peace" },
+    "prompt": "Saturday opens up unexpectedly. The honest answer is you'd rather:",
+    "a": { "label": "Walk a city alone with headphones for six hours", "subtitle": "Solo recharge" },
+    "b": { "label": "Round up four friends and end up somewhere loud", "subtitle": "Communal energy" },
     "duplicateOf": null
   },
   {
@@ -27,8 +37,18 @@
     "id": "q4",
     "kind": "movie_pair",
     "prompt": "Sunday afternoon. Rain. One of these is on.",
-    "a": { "label": "Parasite", "subtitle": "Bong Joon-ho, 2019" },
-    "b": { "label": "Chinatown", "subtitle": "Roman Polanski, 1974" },
+    "a": {
+      "label": "Parasite",
+      "subtitle": "Bong Joon-ho, 2019",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/7IiTTgloJzvGI1TAYymCfbfl3vT.jpg",
+      "dominantColor": "#272727"
+    },
+    "b": {
+      "label": "Knives Out",
+      "subtitle": "Rian Johnson, 2019",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/pThyQovXQrw2m0s9x82twj48Jq4.jpg",
+      "dominantColor": "#5a2a1a"
+    },
     "duplicateOf": null
   },
   {
@@ -65,32 +85,62 @@
     "id": "q7",
     "kind": "movie_pair",
     "prompt": "You want to feel something tonight. Which kind of feeling?",
-    "a": { "label": "Spirited Away", "subtitle": "Hayao Miyazaki, 2001" },
-    "b": { "label": "Manchester by the Sea", "subtitle": "Kenneth Lonergan, 2016" },
+    "a": {
+      "label": "Everything Everywhere All at Once",
+      "subtitle": "Daniels, 2022",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/u68AjlvlutfEIcpmbYpKcdi09ut.jpg",
+      "dominantColor": "#1d1742"
+    },
+    "b": {
+      "label": "Aftersun",
+      "subtitle": "Charlotte Wells, 2022",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/evKz85EKouVbIr51zy5fOtpNRPg.jpg",
+      "dominantColor": "#7da4b3"
+    },
     "duplicateOf": null
   },
   {
     "id": "q8",
     "kind": "movie_pair",
     "prompt": "On your watchlist right now. Pick the one you'll *actually* press play on this week.",
-    "a": { "label": "One Battle After Another", "subtitle": "Paul Thomas Anderson, 2025" },
-    "b": { "label": "Weapons", "subtitle": "Zach Cregger, 2025" },
+    "a": {
+      "label": "One Battle After Another",
+      "subtitle": "Paul Thomas Anderson, 2025",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/lbBWwxBht4JFP5PsuJ5onpMqugW.jpg",
+      "dominantColor": "#0a0a0a"
+    },
+    "b": {
+      "label": "Wicked: For Good",
+      "subtitle": "Jon M. Chu, 2025",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/si9tolnefLSUKaqQEGz1bWArOaL.jpg",
+      "dominantColor": "#1e7d2c"
+    },
     "duplicateOf": null
   },
   {
     "id": "q9",
     "kind": "general",
-    "prompt": "The film is subtitled. Honestly:",
-    "a": { "label": "Doesn't register", "subtitle": "Reading is watching" },
-    "b": { "label": "It's a hurdle.", "subtitle": "I want to look at the screen" },
+    "prompt": "Vacation, week off, money's fine:",
+    "a": { "label": "A village in a country where you don't speak the language", "subtitle": "Strangeness is the point" },
+    "b": { "label": "A city you've already been to twice, you know the good coffee", "subtitle": "I want to look at the screen" },
     "duplicateOf": null
   },
   {
     "id": "q10",
     "kind": "movie_pair",
     "prompt": "A long, beautiful, doomed romance. Which one are you in for?",
-    "a": { "label": "In the Mood for Love", "subtitle": "Wong Kar-wai, 2000" },
-    "b": { "label": "Phantom Thread", "subtitle": "Paul Thomas Anderson, 2017" },
+    "a": {
+      "label": "Past Lives",
+      "subtitle": "Celine Song, 2023",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/k3waqVXSnvCZWfJYNtdamTgTtTA.jpg",
+      "dominantColor": "#2d3852"
+    },
+    "b": {
+      "label": "Challengers",
+      "subtitle": "Luca Guadagnino, 2024",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/H6vke7zGiuLsz4v4RPeReb9rsv.jpg",
+      "dominantColor": "#dd2747"
+    },
     "duplicateOf": null
   },
   {
@@ -113,8 +163,18 @@
     "id": "q13",
     "kind": "movie_pair",
     "prompt": "Same director-ish vibe, different temperatures. Pick.",
-    "a": { "label": "Sicario", "subtitle": "Denis Villeneuve, 2015" },
-    "b": { "label": "The Counselor", "subtitle": "Ridley Scott, 2013" },
+    "a": {
+      "label": "Sicario",
+      "subtitle": "Denis Villeneuve, 2015",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/lz8vNyXeidqqOdJW9ZjnDAMb5Vr.jpg",
+      "dominantColor": "#4a5568"
+    },
+    "b": {
+      "label": "No Country for Old Men",
+      "subtitle": "Coen Brothers, 2007",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/6d5XOczc226jECq0LIX0siKtgHR.jpg",
+      "dominantColor": "#3b2818"
+    },
     "duplicateOf": null
   },
   {
@@ -143,24 +203,44 @@
     "id": "q15",
     "kind": "movie_pair",
     "prompt": "You're traveling alone. Hotel. Laptop. Pick one.",
-    "a": { "label": "Lost in Translation", "subtitle": "Sofia Coppola, 2003" },
-    "b": { "label": "Goodfellas", "subtitle": "Martin Scorsese, 1990" },
+    "a": {
+      "label": "Lost in Translation",
+      "subtitle": "Sofia Coppola, 2003",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/3jCLmYDIIiSMPujbwygNpqdpM8N.jpg",
+      "dominantColor": "#e8b8a8"
+    },
+    "b": {
+      "label": "The Wolf of Wall Street",
+      "subtitle": "Martin Scorsese, 2013",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/kW9LmvYHAaS9iA0tHmZVq8hQYoq.jpg",
+      "dominantColor": "#e6c34a"
+    },
     "duplicateOf": null
   },
   {
     "id": "q16",
     "kind": "general",
-    "prompt": "The premise has dragons / time travel / a multiverse. You:",
-    "a": { "label": "Lean in", "subtitle": "More worlds, please" },
-    "b": { "label": "Lean out", "subtitle": "Keep it grounded" },
+    "prompt": "Your dream apartment, gut check:",
+    "a": { "label": "A 1920s walk-up with crooked floors and a clawfoot tub", "subtitle": "Patina over polish" },
+    "b": { "label": "A glass-walled new build with underfloor heating and one black couch", "subtitle": "Clean lines, modern light" },
     "duplicateOf": null
   },
   {
     "id": "q17",
     "kind": "movie_pair",
     "prompt": "Acclaimed-and-difficult vs widely-loved-and-fun. Tonight's mood:",
-    "a": { "label": "Sinners", "subtitle": "Ryan Coogler, 2025" },
-    "b": { "label": "F1", "subtitle": "Joseph Kosinski, 2025" },
+    "a": {
+      "label": "Sinners",
+      "subtitle": "Ryan Coogler, 2025",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/fWPgbnt2LSqkQ6cdQc0SZN9CpLm.jpg",
+      "dominantColor": "#420a0a"
+    },
+    "b": {
+      "label": "F1",
+      "subtitle": "Joseph Kosinski, 2025",
+      "posterUrl": "https://image.tmdb.org/t/p/w500/vqBmyAj0Xm9LnS1xe1MSlMAJyHq.jpg",
+      "dominantColor": "#1e3a8a"
+    },
     "duplicateOf": null
   },
   {
