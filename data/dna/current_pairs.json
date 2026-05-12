@@ -1,0 +1,59 @@
+{
+  "refreshedOn": "2026-05-11",
+  "note": "Refreshable pools for the 'current 2026' slots (Q8 and Q17). Loadings follow the same 7-axis order as loadings.json. Cycle these as new releases enter the conversation.",
+  "axes": [
+    "prestigePopcorn",
+    "modernClassic",
+    "lightDark",
+    "realityFantasy",
+    "slowKinetic",
+    "soloCommunal",
+    "familiarForeign"
+  ],
+  "q8_pool": [
+    {
+      "a": { "title": "One Battle After Another", "year": 2025, "director": "Paul Thomas Anderson" },
+      "b": { "title": "Weapons", "year": 2025, "director": "Zach Cregger" },
+      "loading_a": [0.8, 1.1, 0, 0, -0.5, 0, 0],
+      "loading_b": [-0.7, 1.1, -0.6, 0, 0, 0, 0]
+    },
+    {
+      "a": { "title": "The Brutalist", "year": 2024, "director": "Brady Corbet" },
+      "b": { "title": "Conclave", "year": 2024, "director": "Edward Berger" },
+      "loading_a": [1.0, 0.9, -0.4, 0.4, 0.9, 0.4, 0],
+      "loading_b": [0.8, 0.6, -0.2, 0.6, 0.3, 0, 0.3]
+    },
+    {
+      "a": { "title": "Anora", "year": 2024, "director": "Sean Baker" },
+      "b": { "title": "Challengers", "year": 2024, "director": "Luca Guadagnino" },
+      "loading_a": [0.5, 1.0, -0.3, 1.0, -0.6, -0.3, 0],
+      "loading_b": [0.4, 1.0, 0.3, 0.5, -0.6, 0, 0.3]
+    },
+    {
+      "a": { "title": "Nickel Boys", "year": 2024, "director": "RaMell Ross" },
+      "b": { "title": "The Substance", "year": 2024, "director": "Coralie Fargeat" },
+      "loading_a": [1.1, 0.8, -1.0, 1.0, 1.0, 0.6, 0],
+      "loading_b": [-0.2, 1.0, -1.0, -0.9, -0.6, 0.3, 0.3]
+    }
+  ],
+  "q17_pool": [
+    {
+      "a": { "title": "Sinners", "year": 2025, "director": "Ryan Coogler" },
+      "b": { "title": "F1", "year": 2025, "director": "Joseph Kosinski" },
+      "loading_a": [0.9, 1.0, -1.0, 0, 0, 0, 0],
+      "loading_b": [-1.1, 0, 0.7, 0, -1.0, 0, 0]
+    },
+    {
+      "a": { "title": "The Zone of Interest", "year": 2023, "director": "Jonathan Glazer" },
+      "b": { "title": "Top Gun: Maverick", "year": 2022, "director": "Joseph Kosinski" },
+      "loading_a": [1.2, 0.7, -1.2, 0.7, 0.8, 0.6, -0.4],
+      "loading_b": [-1.2, 0.4, 0.9, -0.2, -1.2, -0.7, 0.7]
+    },
+    {
+      "a": { "title": "Poor Things", "year": 2023, "director": "Yorgos Lanthimos" },
+      "b": { "title": "Barbie", "year": 2023, "director": "Greta Gerwig" },
+      "loading_a": [0.9, 0.9, 0.4, -0.8, -0.3, 0.3, 0.2],
+      "loading_b": [-0.6, 1.0, 1.0, -0.6, -0.7, -0.6, 0.7]
+    }
+  ]
+}

@@ -1,0 +1,82 @@
+[
+  {
+    "key": "slow_burn_romantic",
+    "name": "Slow-Burn Romantic",
+    "tagline": "You believe in longing more than catharsis.",
+    "anchorFilm": { "title": "In the Mood for Love", "tmdbId": 843, "year": 2000 },
+    "anchorDirector": "Wong Kar-wai",
+    "centroid": [0.7, -0.6, -0.2, -0.4, 1.0, 0.4, -0.7]
+  },
+  {
+    "key": "late_night_stylist",
+    "name": "Late-Night Stylist",
+    "tagline": "Mood is the story. Everything else is set dressing.",
+    "anchorFilm": { "title": "Drive", "tmdbId": 64690, "year": 2011 },
+    "anchorDirector": "Nicolas Winding Refn",
+    "centroid": [0.3, 0.4, -0.7, -0.2, 0.3, 0.7, 0.0]
+  },
+  {
+    "key": "cerebral_adventurer",
+    "name": "Cerebral Adventurer",
+    "tagline": "You want the genre to think alongside you.",
+    "anchorFilm": { "title": "Annihilation", "tmdbId": 300668, "year": 2018 },
+    "anchorDirector": "Alex Garland",
+    "centroid": [0.4, 0.7, -0.4, -0.8, 0.0, 0.3, -0.4]
+  },
+  {
+    "key": "domestic_excavator",
+    "name": "Domestic Excavator",
+    "tagline": "Small rooms. Long takes. The weight of a life.",
+    "anchorFilm": { "title": "Manchester by the Sea", "tmdbId": 334541, "year": 2016 },
+    "anchorDirector": "Kenneth Lonergan",
+    "centroid": [0.8, 0.3, -0.9, 1.2, 0.7, 0.5, 0.3]
+  },
+  {
+    "key": "gleeful_maximalist",
+    "name": "Gleeful Maximalist",
+    "tagline": "More is more. Hand me the kitchen sink.",
+    "anchorFilm": { "title": "Everything Everywhere All at Once", "tmdbId": 545611, "year": 2022 },
+    "anchorDirector": "Daniels",
+    "centroid": [-0.3, 1.0, 0.7, -1.0, -1.0, -0.4, 0.0]
+  },
+  {
+    "key": "dread_cartographer",
+    "name": "Dread Cartographer",
+    "tagline": "You map the dark room, slowly, and refuse to flinch.",
+    "anchorFilm": { "title": "Hereditary", "tmdbId": 493922, "year": 2018 },
+    "anchorDirector": "Ari Aster",
+    "centroid": [0.6, 0.5, -1.3, 0.0, 0.7, 0.6, 0.0]
+  },
+  {
+    "key": "genre_mechanic",
+    "name": "Genre Mechanic",
+    "tagline": "Show me the craft. Make the machine sing.",
+    "anchorFilm": { "title": "Mission: Impossible - Fallout", "tmdbId": 353081, "year": 2018 },
+    "anchorDirector": "Christopher McQuarrie",
+    "centroid": [-1.0, 0.6, 0.5, -0.3, -1.2, -0.7, 0.6]
+  },
+  {
+    "key": "tender_absurdist",
+    "name": "Tender Absurdist",
+    "tagline": "Heartbreak with a punchline. Symmetry as a love language.",
+    "anchorFilm": { "title": "The Grand Budapest Hotel", "tmdbId": 120467, "year": 2014 },
+    "anchorDirector": "Wes Anderson",
+    "centroid": [0.7, 0.4, 0.6, -0.7, 0.2, 0.0, 0.5]
+  },
+  {
+    "key": "street_realist",
+    "name": "Street Realist",
+    "tagline": "Sweat. Sidewalks. People talking over each other.",
+    "anchorFilm": { "title": "Uncut Gems", "tmdbId": 473033, "year": 2019 },
+    "anchorDirector": "Josh & Benny Safdie",
+    "centroid": [0.1, 0.9, -0.8, 1.1, -1.3, -0.5, 0.3]
+  },
+  {
+    "key": "mythic_wanderer",
+    "name": "Mythic Wanderer",
+    "tagline": "Take me somewhere with its own gravity.",
+    "anchorFilm": { "title": "Spirited Away", "tmdbId": 129, "year": 2001 },
+    "anchorDirector": "Hayao Miyazaki",
+    "centroid": [0.3, -0.2, 0.4, -1.2, 0.3, 0.2, -1.0]
+  }
+]

@@ -4,6 +4,7 @@ import { combineRatings } from "./ratingsAggregator";
 import { mapProviderEntries } from "./providerMapper";
 import { getOmdbByImdbId } from "./omdbClient";
 import { backdropUrl, posterUrl } from "./tmdbClient";
+import { computeMovieDnaProfile } from "./movies/dnaProfile";
 import type {
   MovieResult,
   TmdbMovieDetail,
@@ -63,6 +64,13 @@ export async function buildMovieResult(
   const regionLower = opts.region.toLowerCase();
   const justwatchUrl = `${JUSTWATCH}/${regionLower}/search?q=${encodeURIComponent(movie.title)}`;
 
+  const dnaProfile = computeMovieDnaProfile({
+    genreIds: movie.genreIds,
+    runtime: opts.runtime ?? null,
+    year: movie.year,
+    originalLanguage: movie.originalLanguage,
+  });
+
   return {
     tmdbId: movie.id,
     imdbId,
@@ -83,6 +91,7 @@ export async function buildMovieResult(
       imdb: imdbId ? `${IMDB_BASE}/${imdbId}/` : null,
       justwatch: justwatchUrl,
     },
+    dnaProfile,
   };
 }
 

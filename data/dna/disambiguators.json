@@ -1,0 +1,213 @@
+{
+  "note": "Keys are the two archetype keys sorted lexicographically and joined by '|'. Each entry has 3 disambiguator questions chosen to discriminate that specific top-2 confusion. Loadings are 7-vectors aligned to the same axes order as loadings.json.",
+  "axes": [
+    "prestigePopcorn",
+    "modernClassic",
+    "lightDark",
+    "realityFantasy",
+    "slowKinetic",
+    "soloCommunal",
+    "familiarForeign"
+  ],
+  "pairs": {
+    "slow_burn_romantic|tender_absurdist": {
+      "questions": [
+        {
+          "prompt": "The love story ends ambiguously. You want…",
+          "a": { "label": "The ache of not-knowing", "loading": [0.4, 0, -0.4, 0, 0.6, 0.4, 0] },
+          "b": { "label": "A small absurd grace note", "loading": [-0.2, 0.3, 0.4, -0.4, 0.2, 0, 0.4] }
+        },
+        {
+          "prompt": "Production design that draws your eye:",
+          "a": { "label": "A red dress disappearing around a corner in 1962 Hong Kong", "loading": [0.5, -0.5, -0.3, 0, 0.6, 0.3, -0.6] },
+          "b": { "label": "A pastel hotel lobby with a clerk in a purple uniform", "loading": [0.3, 0.4, 0.6, -0.6, 0, 0, 0.5] }
+        },
+        {
+          "prompt": "When the film breaks your heart it should…",
+          "a": { "label": "Take its time and never say the word out loud", "loading": [0.3, 0, -0.3, 0, 0.8, 0.3, 0] },
+          "b": { "label": "Crack a joke on the way down", "loading": [-0.2, 0.3, 0.5, 0, 0, 0, 0.3] }
+        }
+      ]
+    },
+
+    "dread_cartographer|genre_mechanic": {
+      "questions": [
+        {
+          "prompt": "Two hours of tension. You'd rather it come from…",
+          "a": { "label": "A slow rot in the family home", "loading": [0.4, 0, -1.0, 0, 0.5, 0.4, 0] },
+          "b": { "label": "A briefcase, a rooftop, a ticking clock", "loading": [-0.8, 0.3, 0.3, -0.3, -1.0, -0.6, 0.5] }
+        },
+        {
+          "prompt": "After the credits you want to feel…",
+          "a": { "label": "Vaguely unwell, like you saw something", "loading": [0.3, 0, -0.9, 0, 0.4, 0.5, 0] },
+          "b": { "label": "Like you got off a rollercoaster grinning", "loading": [-0.7, 0, 0.7, 0, -0.7, -0.5, 0.3] }
+        },
+        {
+          "prompt": "The villain works best when…",
+          "a": { "label": "You're not sure what they are", "loading": [0.3, 0, -0.8, 0.3, 0.4, 0.3, -0.3] },
+          "b": { "label": "You can clearly see what they want", "loading": [-0.4, 0, 0.2, -0.3, -0.5, -0.3, 0.3] }
+        }
+      ]
+    },
+
+    "cerebral_adventurer|late_night_stylist": {
+      "questions": [
+        {
+          "prompt": "An hour in. The plot is still abstract. You're…",
+          "a": { "label": "Engaged — let me work for it", "loading": [0.5, 0.5, 0, -0.5, 0.3, 0.4, -0.3] },
+          "b": { "label": "Fine, as long as it *looks* this good", "loading": [0, 0.4, -0.6, 0, 0.4, 0.6, 0.3] }
+        },
+        {
+          "prompt": "The thing that pulls you in:",
+          "a": { "label": "An idea I can chew on for a week", "loading": [0.6, 0.5, -0.3, -0.7, 0, 0.4, -0.4] },
+          "b": { "label": "A frame I'd hang on the wall", "loading": [0.2, 0.4, -0.6, 0, 0.4, 0.6, 0.2] }
+        },
+        {
+          "prompt": "Sound design lands harder than plot. Reaction:",
+          "a": { "label": "Cool — but where's the *idea*?", "loading": [0.4, 0.4, 0, -0.6, 0, 0.3, -0.3] },
+          "b": { "label": "Honestly, that's enough for me tonight", "loading": [-0.2, 0.3, -0.5, 0, 0.3, 0.6, 0.2] }
+        }
+      ]
+    },
+
+    "domestic_excavator|slow_burn_romantic": {
+      "questions": [
+        {
+          "prompt": "Slow drama, hushed voices. You want it set in…",
+          "a": { "label": "A small American town in winter", "loading": [0.6, 0.3, -0.7, 1.0, 0.6, 0.4, 0.7] },
+          "b": { "label": "A neon-lit apartment in 1960s Hong Kong", "loading": [0.6, -0.6, -0.4, -0.4, 0.8, 0.3, -1.0] }
+        },
+        {
+          "prompt": "Grief or longing — which is your home key?",
+          "a": { "label": "Grief that doesn't lift", "loading": [0.5, 0, -1.0, 0.8, 0.5, 0.5, 0.4] },
+          "b": { "label": "Longing for someone you never had", "loading": [0.5, -0.4, -0.3, -0.3, 0.8, 0.4, -0.6] }
+        },
+        {
+          "prompt": "The score is mostly…",
+          "a": { "label": "Quiet piano, almost silence", "loading": [0.6, 0.3, -0.7, 0.7, 0.6, 0.5, 0.4] },
+          "b": { "label": "A recurring orchestral motif in waltz time", "loading": [0.5, -0.4, -0.2, -0.3, 0.7, 0.3, -0.7] }
+        }
+      ]
+    },
+
+    "gleeful_maximalist|mythic_wanderer": {
+      "questions": [
+        {
+          "prompt": "Fantastical worlds, your flavor:",
+          "a": { "label": "Loud, fast, jokes flying, multiverses colliding", "loading": [-0.5, 1.0, 0.6, -1.0, -1.0, -0.5, 0.4] },
+          "b": { "label": "Quiet, drifting, the wind through old trees", "loading": [0.4, -0.4, 0.4, -1.2, 0.6, 0.3, -1.0] }
+        },
+        {
+          "prompt": "The hero's journey, please:",
+          "a": { "label": "Five climaxes stacked end to end", "loading": [-0.6, 0.9, 0.5, -0.8, -1.1, -0.4, 0.3] },
+          "b": { "label": "One quiet step at a time", "loading": [0.3, -0.3, 0.4, -1.1, 0.7, 0.4, -0.9] }
+        },
+        {
+          "prompt": "When the film gets weird, it should be…",
+          "a": { "label": "Weird AND hilarious AND devastating, all at once", "loading": [-0.4, 1.0, 0.7, -0.9, -0.9, -0.4, 0.3] },
+          "b": { "label": "Weird in the way old folktales are weird", "loading": [0.3, -0.4, 0.4, -1.0, 0.6, 0.3, -1.0] }
+        }
+      ]
+    },
+
+    "late_night_stylist|tender_absurdist": {
+      "questions": [
+        {
+          "prompt": "Style on full blast. Yours leans…",
+          "a": { "label": "Nocturnal, synth-soaked, hands on the wheel", "loading": [0.2, 0.5, -0.8, 0, 0.3, 0.7, 0.2] },
+          "b": { "label": "Daylit dollhouse, deadpan, hands in pockets", "loading": [0.5, 0.3, 0.5, -0.6, 0.2, 0, 0.6] }
+        },
+        {
+          "prompt": "Best frame in your favorite film is…",
+          "a": { "label": "A long, slow elevator ride lit blood-red", "loading": [0.2, 0.5, -1.0, 0, 0.4, 0.7, 0.2] },
+          "b": { "label": "Three characters posed center-frame, perfectly spaced", "loading": [0.5, 0.4, 0.5, -0.5, 0, 0, 0.6] }
+        },
+        {
+          "prompt": "Dialogue you'd quote back:",
+          "a": { "label": "Five words, said while looking away", "loading": [0.3, 0.4, -0.7, 0, 0.3, 0.7, 0.2] },
+          "b": { "label": "A baroque toast at a tiny banquet", "loading": [0.4, 0.3, 0.5, -0.4, 0.2, 0, 0.5] }
+        }
+      ]
+    },
+
+    "domestic_excavator|dread_cartographer": {
+      "questions": [
+        {
+          "prompt": "A family is falling apart on screen. The dread comes from…",
+          "a": { "label": "The plain weight of grief, no monster needed", "loading": [0.7, 0.3, -0.9, 1.2, 0.6, 0.5, 0.4] },
+          "b": { "label": "Something is wrong in this house and I don't know what yet", "loading": [0.5, 0.4, -1.2, 0.2, 0.6, 0.5, 0] }
+        },
+        {
+          "prompt": "Long takes of a parent's face. You want the camera to show…",
+          "a": { "label": "Exhaustion no one will name", "loading": [0.7, 0.2, -0.8, 1.1, 0.7, 0.5, 0.3] },
+          "b": { "label": "Eyes flicking to something in the corner", "loading": [0.5, 0.4, -1.2, 0.3, 0.6, 0.5, 0] }
+        },
+        {
+          "prompt": "By the end, the film has…",
+          "a": { "label": "Refused to comfort you, but it stayed honest", "loading": [0.7, 0.2, -0.9, 1.1, 0.7, 0.5, 0.4] },
+          "b": { "label": "Refused to comfort you, and broken the rules of the room", "loading": [0.5, 0.4, -1.3, 0.0, 0.6, 0.6, 0] }
+        }
+      ]
+    },
+
+    "genre_mechanic|street_realist": {
+      "questions": [
+        {
+          "prompt": "Kinetic energy you crave:",
+          "a": { "label": "A perfectly choreographed five-minute set-piece", "loading": [-1.0, 0.5, 0.4, -0.3, -1.2, -0.7, 0.6] },
+          "b": { "label": "A chaotic five-minute argument in a too-small room", "loading": [0.0, 0.9, -0.7, 1.1, -1.3, -0.5, 0.3] }
+        },
+        {
+          "prompt": "The lead character is…",
+          "a": { "label": "Competent. Calm. Knows the move.", "loading": [-0.9, 0.4, 0.3, -0.2, -1.1, -0.6, 0.6] },
+          "b": { "label": "A mess. Sweating. About to make it worse.", "loading": [0.0, 0.9, -0.8, 1.2, -1.2, -0.4, 0.3] }
+        },
+        {
+          "prompt": "Camera you prefer:",
+          "a": { "label": "Stable, wide, framed like an architect", "loading": [-1.0, 0.4, 0.4, -0.3, -1.0, -0.7, 0.6] },
+          "b": { "label": "Handheld, too close, breathing on the actor's neck", "loading": [0.1, 0.9, -0.7, 1.1, -1.3, -0.4, 0.3] }
+        }
+      ]
+    },
+
+    "cerebral_adventurer|dread_cartographer": {
+      "questions": [
+        {
+          "prompt": "The film's central image is something inexplicable. You want…",
+          "a": { "label": "A theory I can puzzle out on the walk home", "loading": [0.5, 0.6, -0.4, -0.7, 0.2, 0.4, -0.4] },
+          "b": { "label": "A feeling that won't let me sleep", "loading": [0.4, 0.4, -1.2, 0.2, 0.6, 0.6, 0] }
+        },
+        {
+          "prompt": "Body horror, science, or ritual — your wedge in?",
+          "a": { "label": "The biology, the geometry, the math underneath", "loading": [0.5, 0.7, -0.5, -0.8, 0.0, 0.3, -0.4] },
+          "b": { "label": "The ritual. The chant. The thing the family doesn't say.", "loading": [0.4, 0.4, -1.2, 0.1, 0.6, 0.6, 0] }
+        },
+        {
+          "prompt": "Ambiguous ending. You walk out…",
+          "a": { "label": "Already drafting a Reddit post", "loading": [0.5, 0.7, -0.3, -0.7, 0.1, 0.3, -0.4] },
+          "b": { "label": "Already checking the back seat of your car", "loading": [0.3, 0.4, -1.2, 0.2, 0.5, 0.6, 0] }
+        }
+      ]
+    },
+
+    "mythic_wanderer|slow_burn_romantic": {
+      "questions": [
+        {
+          "prompt": "A long, dreamlike sequence. You'd rather it be…",
+          "a": { "label": "A spirit world I've never seen before", "loading": [0.3, -0.3, 0.4, -1.2, 0.4, 0.3, -1.0] },
+          "b": { "label": "A real city at 3am, every detail aching", "loading": [0.6, -0.5, -0.4, -0.3, 0.9, 0.4, -0.7] }
+        },
+        {
+          "prompt": "The story's emotional center is…",
+          "a": { "label": "A child learning the rules of an old world", "loading": [0.3, -0.3, 0.5, -1.2, 0.4, 0.3, -0.9] },
+          "b": { "label": "Two adults forbidden to say what they mean", "loading": [0.6, -0.5, -0.4, -0.3, 1.0, 0.4, -0.8] }
+        },
+        {
+          "prompt": "The music you'd carry home:",
+          "a": { "label": "A piano theme that sounds like a folktale", "loading": [0.3, -0.3, 0.5, -1.2, 0.3, 0.2, -1.0] },
+          "b": { "label": "A waltz that won't get out of your head", "loading": [0.6, -0.5, -0.3, -0.3, 1.0, 0.4, -0.8] }
+        }
+      ]
+    }
+  }
+}

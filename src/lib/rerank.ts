@@ -23,6 +23,11 @@ export interface RerankInput {
   wildKeywordHints?: string[];
   /** TMDb movie ids tied to a person born/died today — tribute boost. */
   tributeMovieIds?: Set<number>;
+  /**
+   * Optional 7-dim user DNA vector in canonical axis order. When present,
+   * movies whose `dnaProfile` aligns get a bounded boost.
+   */
+  userDna?: number[] | null;
 }
 
 export interface Reason {
@@ -50,10 +55,58 @@ const W = {
   wildGenre: 3,
   wildKeyword: 2,
   tribute: 4,
+  dna: 0.9,
 } as const;
 
-const BOOST_CAP = 15;
+const BOOST_CAP = 18;
 const VOTE_FLOOR = 300;
+
+/**
+ * Pole labels for each of the 7 DNA axes, in canonical order.
+ * Pair shape: [negative-pole label, positive-pole label]. A movie whose
+ * `dnaProfile[i] * userDna[i]` is large+positive aligns the user with the
+ * label at the SIDE of `userDna[i]` (the user's pole). See `dnaAlignPhrase`.
+ */
+const DNA_DIM_LABELS: [string, string][] = [
+  ["popcorn", "prestige"],
+  ["classic", "modern"],
+  ["dark", "light"],
+  ["fantasy", "reality"],
+  ["kinetic", "slow"],
+  ["communal", "solo"],
+  ["foreign", "familiar"],
+];
+
+function dnaAlignPhrase(userDna: number[], movieDna: number[]): string | null {
+  // Per-dim contribution magnitude in the aligned direction (positive only).
+  const dims: { i: number; signed: number; abs: number }[] = [];
+  for (let i = 0; i < 7; i++) {
+    const signed = userDna[i] * movieDna[i];
+    if (signed <= 0) continue;
+    dims.push({ i, signed, abs: Math.abs(signed) });
+  }
+  if (!dims.length) return null;
+  dims.sort((a, b) => b.abs - a.abs);
+  const top = dims.slice(0, 2);
+  const words = top.map(({ i }) => {
+    const userSide = userDna[i] >= 0 ? 1 : 0;
+    const label = DNA_DIM_LABELS[i][userSide];
+    // Soften the bare adjective into a short phrase per axis.
+    switch (i) {
+      case 0: return label; // "prestige" / "popcorn"
+      case 1: return label; // "modern" / "classic"
+      case 2: return label === "light" ? "lighter tone" : "darker tone";
+      case 3: return label === "reality" ? "grounded" : "fantastical";
+      case 4: return label === "slow" ? "slow pace" : "kinetic energy";
+      case 5: return label === "solo" ? "solo viewing" : "communal viewing";
+      case 6: return label === "familiar" ? "familiar" : "foreign";
+      default: return label;
+    }
+  });
+  if (!words.length) return null;
+  const joined = words.length === 2 ? `${words[0]}, ${words[1]}` : words[0];
+  return `matches your DNA (${joined})`;
+}
 
 const clamp = (x: number, lo: number, hi: number) => Math.max(lo, Math.min(hi, x));
 
@@ -133,6 +186,14 @@ export function rerank(input: RerankInput): RankedMovie[] {
       }
       const tribute = input.tributeMovieIds?.has(m.tmdbId) ? 1 : 0;
 
+      // DNA alignment: cosine-style dot product / 7 → roughly [-1, +1].
+      let dnaScore = 0;
+      if (input.userDna && input.userDna.length === 7 && m.dnaProfile && m.dnaProfile.length === 7) {
+        let dot = 0;
+        for (let i = 0; i < 7; i++) dot += input.userDna[i] * m.dnaProfile[i];
+        dnaScore = dot / 7;
+      }
+
       const raw =
         wProvider * pm.score +
         wDaypart * dpFit +
@@ -143,6 +204,7 @@ export function rerank(input: RerankInput): RankedMovie[] {
         W.wildGenre * wildGenre +
         W.wildKeyword * wildKeyword +
         W.tribute * tribute +
+        W.dna * dnaScore +
         watchlistBoost;
 
       const boost = clamp(raw, -BOOST_CAP, BOOST_CAP);
@@ -183,6 +245,10 @@ export function rerank(input: RerankInput): RankedMovie[] {
       if (tribute) push("tribute", W.tribute, "tribute pick for someone born or remembered today");
       if (wildGenre >= 0.4) push("wild", W.wildGenre * wildGenre, "matches today's vibe in the news");
       else if (wildKeyword >= 0.4) push("wild", W.wildKeyword * wildKeyword, "echoes something happening today");
+      if (input.userDna && m.dnaProfile && Math.abs(W.dna * dnaScore) >= 0.4) {
+        const phrase = dnaAlignPhrase(input.userDna, m.dnaProfile);
+        if (phrase) push("dna", W.dna * dnaScore, phrase);
+      }
       reasons.sort((a, b) => Math.abs(b.magnitude) - Math.abs(a.magnitude));
       return { movie: m, base, boost, finalScore, daypart: dp, reasons: reasons.slice(0, 3) };
     })

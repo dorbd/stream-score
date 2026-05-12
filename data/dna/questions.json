@@ -1,0 +1,174 @@
+[
+  {
+    "id": "q1",
+    "kind": "movie_pair",
+    "prompt": "It's 9pm Friday. Which one are you pressing play on right now — not next weekend, *tonight*?",
+    "a": { "label": "The Grand Budapest Hotel", "subtitle": "Wes Anderson, 2014" },
+    "b": { "label": "Mad Max: Fury Road", "subtitle": "George Miller, 2015" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q2",
+    "kind": "general",
+    "prompt": "The group chat is picking tonight's movie. You: …",
+    "a": { "label": "Push hard for the one nobody's seen", "subtitle": "Evangelist energy" },
+    "b": { "label": "Suggest the comfort rewatch everyone will enjoy", "subtitle": "Keep the peace" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q3",
+    "kind": "general",
+    "prompt": "A character is crying in the rain at the emotional climax. You're more moved when the film is…",
+    "a": { "label": "Played completely straight, no winking", "subtitle": "Earn the tears" },
+    "b": { "label": "Self-aware about the cliché it's invoking", "subtitle": "Knows what it is" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q4",
+    "kind": "movie_pair",
+    "prompt": "Sunday afternoon. Rain. One of these is on.",
+    "a": { "label": "Parasite", "subtitle": "Bong Joon-ho, 2019" },
+    "b": { "label": "Chinatown", "subtitle": "Roman Polanski, 1974" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q5",
+    "kind": "aesthetic",
+    "prompt": "Which frame would you rather live inside for two hours?",
+    "a": {
+      "label": "Wes Anderson symmetry",
+      "subtitle": "Pastel pinks and centered doorways",
+      "still": {
+        "description": "A perfectly centered hotel lobby in cotton-candy pink, bellhop frozen mid-step under a clock with brass hands, dollhouse symmetry.",
+        "colorHint": "pastel-symmetric"
+      }
+    },
+    "b": {
+      "label": "Safdie handheld",
+      "subtitle": "Neon, sweat, motion blur",
+      "still": {
+        "description": "A cramped jewelry counter under buzzing fluorescents, faces in close-up shouting over each other, the camera trembling like it's also panicking.",
+        "colorHint": "neon-frenetic"
+      }
+    },
+    "duplicateOf": null
+  },
+  {
+    "id": "q6",
+    "kind": "general",
+    "prompt": "A friend says: 'Trust me, the first 40 minutes are slow but it's worth it.'",
+    "a": { "label": "In.", "subtitle": "Patience is part of the deal" },
+    "b": { "label": "Pass.", "subtitle": "Life is short" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q7",
+    "kind": "movie_pair",
+    "prompt": "You want to feel something tonight. Which kind of feeling?",
+    "a": { "label": "Spirited Away", "subtitle": "Hayao Miyazaki, 2001" },
+    "b": { "label": "Manchester by the Sea", "subtitle": "Kenneth Lonergan, 2016" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q8",
+    "kind": "movie_pair",
+    "prompt": "On your watchlist right now. Pick the one you'll *actually* press play on this week.",
+    "a": { "label": "One Battle After Another", "subtitle": "Paul Thomas Anderson, 2025" },
+    "b": { "label": "Weapons", "subtitle": "Zach Cregger, 2025" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q9",
+    "kind": "general",
+    "prompt": "The film is subtitled. Honestly:",
+    "a": { "label": "Doesn't register", "subtitle": "Reading is watching" },
+    "b": { "label": "It's a hurdle.", "subtitle": "I want to look at the screen" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q10",
+    "kind": "movie_pair",
+    "prompt": "A long, beautiful, doomed romance. Which one are you in for?",
+    "a": { "label": "In the Mood for Love", "subtitle": "Wong Kar-wai, 2000" },
+    "b": { "label": "Phantom Thread", "subtitle": "Paul Thomas Anderson, 2017" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q11",
+    "kind": "general",
+    "prompt": "You finish a movie at 11pm Tuesday alone. What did it just do to you?",
+    "a": { "label": "Left me staring at the ceiling", "subtitle": "The good kind of haunted" },
+    "b": { "label": "Sent me to bed grinning", "subtitle": "What a ride" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q12",
+    "kind": "lie_detector",
+    "prompt": "Movie's been going 35 minutes. You're not bored, but nothing's *happened* yet. Are you…",
+    "a": { "label": "Restless", "subtitle": "Get on with it" },
+    "b": { "label": "Settled in", "subtitle": "This is the good part" },
+    "duplicateOf": "q6"
+  },
+  {
+    "id": "q13",
+    "kind": "movie_pair",
+    "prompt": "Same director-ish vibe, different temperatures. Pick.",
+    "a": { "label": "Sicario", "subtitle": "Denis Villeneuve, 2015" },
+    "b": { "label": "The Counselor", "subtitle": "Ridley Scott, 2013" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q14",
+    "kind": "aesthetic",
+    "prompt": "Which frame *feels* like home?",
+    "a": {
+      "label": "Bone-warm palette",
+      "subtitle": "Lamps, wood, late afternoon",
+      "still": {
+        "description": "A kitchen lit by the last hour of daylight, dust in the air, a mug of tea on a scratched wooden table — the whole room the color of toast.",
+        "colorHint": "warm-saturated"
+      }
+    },
+    "b": {
+      "label": "Industrial-cool palette",
+      "subtitle": "Steel, fog, rain on glass",
+      "still": {
+        "description": "A high-rise hallway at 3am, fluorescent strips reflecting on wet concrete, a figure in silhouette at the far end — everything the color of a dropped knife.",
+        "colorHint": "cool-desaturated"
+      }
+    },
+    "duplicateOf": null
+  },
+  {
+    "id": "q15",
+    "kind": "movie_pair",
+    "prompt": "You're traveling alone. Hotel. Laptop. Pick one.",
+    "a": { "label": "Lost in Translation", "subtitle": "Sofia Coppola, 2003" },
+    "b": { "label": "Goodfellas", "subtitle": "Martin Scorsese, 1990" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q16",
+    "kind": "general",
+    "prompt": "The premise has dragons / time travel / a multiverse. You:",
+    "a": { "label": "Lean in", "subtitle": "More worlds, please" },
+    "b": { "label": "Lean out", "subtitle": "Keep it grounded" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q17",
+    "kind": "movie_pair",
+    "prompt": "Acclaimed-and-difficult vs widely-loved-and-fun. Tonight's mood:",
+    "a": { "label": "Sinners", "subtitle": "Ryan Coogler, 2025" },
+    "b": { "label": "F1", "subtitle": "Joseph Kosinski, 2025" },
+    "duplicateOf": null
+  },
+  {
+    "id": "q18",
+    "kind": "tv_optional",
+    "prompt": "Optional. Name a TV show you loved enough to recommend twice.",
+    "a": { "label": "(free text)", "subtitle": "Skippable — computed server-side, weight 0.5×" },
+    "b": { "label": "(skip)", "subtitle": "" },
+    "duplicateOf": null
+  }
+]

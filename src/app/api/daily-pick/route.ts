@@ -62,6 +62,29 @@ function parseList(v: string | null): string[] {
   return v ? v.split(",").map((s) => s.trim()).filter(Boolean) : [];
 }
 
+/**
+ * Decode `?dna=<base64>` query param into a number[7] (or null on failure).
+ * Encoding: 7 × Float32 little-endian = 28 bytes → base64url ≈ 40 chars.
+ */
+function decodeUserDna(v: string | null): number[] | null {
+  if (!v) return null;
+  try {
+    const normalized = v.replace(/-/g, "+").replace(/_/g, "/");
+    const buf = Buffer.from(normalized, "base64");
+    if (buf.byteLength < 28) return null;
+    const view = new DataView(buf.buffer, buf.byteOffset, 28);
+    const out: number[] = new Array(7);
+    for (let i = 0; i < 7; i++) {
+      const f = view.getFloat32(i * 4, true);
+      if (!Number.isFinite(f)) return null;
+      out[i] = Math.max(-1, Math.min(1, f));
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
 function parseIntInRange(v: string | null, lo: number, hi: number): number | null {
   if (!v) return null;
   const n = Number(v);
@@ -116,6 +139,8 @@ export async function GET(req: NextRequest) {
       weekday,
       holidayFlag: holiday,
     });
+
+    const userDna = decodeUserDna(sp.get("dna"));
 
     const noCache = sp.get("nocache") === "1";
     if (!noCache) {
@@ -188,6 +213,7 @@ export async function GET(req: NextRequest) {
       wildGenreBoosts: wild.genreBoosts,
       wildKeywordHints: wild.keywordHints,
       tributeMovieIds,
+      userDna,
     });
 
     if (!top.length) {

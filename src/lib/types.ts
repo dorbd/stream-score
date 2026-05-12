@@ -120,6 +120,8 @@ export interface MovieResult {
     imdb: string | null;
     justwatch: string | null;
   };
+  /** 7-dim taste-space vector in canonical axis order; clipped to [-1, +1]. */
+  dnaProfile?: number[];
 }
 
 export interface ProviderTag {

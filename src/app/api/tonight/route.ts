@@ -14,6 +14,29 @@ function parseList(v: string | null): string[] {
   return v ? v.split(",").map((s) => s.trim()).filter(Boolean) : [];
 }
 
+/**
+ * Decode `?dna=<base64>` query param into a number[7] (or null on failure).
+ * Encoding: 7 × Float32 little-endian = 28 bytes → base64url ≈ 40 chars.
+ */
+function decodeUserDna(v: string | null): number[] | null {
+  if (!v) return null;
+  try {
+    const normalized = v.replace(/-/g, "+").replace(/_/g, "/");
+    const buf = Buffer.from(normalized, "base64");
+    if (buf.byteLength < 28) return null;
+    const view = new DataView(buf.buffer, buf.byteOffset, 28);
+    const out: number[] = new Array(7);
+    for (let i = 0; i < 7; i++) {
+      const f = view.getFloat32(i * 4, true);
+      if (!Number.isFinite(f)) return null;
+      out[i] = Math.max(-1, Math.min(1, f));
+    }
+    return out;
+  } catch {
+    return null;
+  }
+}
+
 const CANDIDATE_PAGES = 3; // 60 candidates from TMDb at vote_average.desc
 
 export async function GET(req: NextRequest) {
@@ -27,6 +50,7 @@ export async function GET(req: NextRequest) {
     const watchlistIds = new Set(parseList(sp.get("watchlist")).map(Number).filter(Boolean));
     const hiddenIds = new Set(parseList(sp.get("hide")).map(Number).filter(Boolean));
     const moodGenres = parseList(sp.get("genres")).map(Number).filter(Boolean);
+    const userDna = decodeUserDna(sp.get("dna"));
 
     // Fetch genre catalog so MovieResult.genres has names.
     const genres = await getMovieGenres().catch(() => []);
@@ -102,6 +126,7 @@ export async function GET(req: NextRequest) {
       wildGenreBoosts: wild.genreBoosts,
       wildKeywordHints: wild.keywordHints,
       tributeMovieIds,
+      userDna,
     });
 
     const top = rankings.slice(0, 12).map((r) => ({
