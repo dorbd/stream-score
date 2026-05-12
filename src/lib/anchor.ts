@@ -7,7 +7,7 @@
 // Total footprint: ~250 bytes JSON. Schema is versioned so future
 // migrations can wipe-and-rebuild instead of inflating storage.
 
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 export const ANCHOR_STORAGE_KEY = "stream-score:anchor";
 const EVENT = "stream-score:anchor-changed";
@@ -182,7 +182,17 @@ export function useAnchor(): {
   hydrated: boolean;
 } {
   const anchor = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const hydrated = typeof window !== "undefined";
+  // Defer hydrated flip to post-mount to avoid SSR/CSR markup mismatch.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    let canceled = false;
+    Promise.resolve().then(() => {
+      if (!canceled) setHydrated(true);
+    });
+    return () => {
+      canceled = true;
+    };
+  }, []);
   const setAnchor = useCallback(
     (input: {
       tmdbId: number;

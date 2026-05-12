@@ -1,7 +1,7 @@
 "use client";
 // Generic localStorage-backed number-set hook with cross-tab sync,
 // modeled on useSelectedProviders but parameterized by storage key.
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 interface Slot {
   cached: number[];
@@ -98,7 +98,17 @@ export function useLocalNumberSet(storageKey: string): {
   const getServerSnapshot = useCallback(() => [] as number[], []);
 
   const values = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  const hydrated = typeof window !== "undefined";
+  // Defer hydrated flip to post-mount to avoid SSR/CSR markup mismatch.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    let canceled = false;
+    Promise.resolve().then(() => {
+      if (!canceled) setHydrated(true);
+    });
+    return () => {
+      canceled = true;
+    };
+  }, []);
 
   const has = useCallback((id: number) => values.includes(id), [values]);
   const add = useCallback(

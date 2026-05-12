@@ -15,7 +15,7 @@
 // `StoredDna`. In particular: NO raw question loadings, NO question
 // prompts, NO server-side identifiers.
 
-import { useSyncExternalStore } from "react";
+import { useEffect, useState, useSyncExternalStore } from "react";
 
 export const DNA_STORAGE_KEY = "stream-score:dna:v1";
 const EVENT = "stream-score:dna-changed";
@@ -230,9 +230,17 @@ function getServerSnapshot(): StoredDna | null {
 /** React hook — subscribes to localStorage updates and cross-tab `storage` events. */
 export function useStoredDna(): { dna: StoredDna | null; hydrated: boolean } {
   const dna = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  // On the server snapshot we have not hydrated; in the browser the first
-  // getSnapshot call flips the flag.
-  const isHydrated = typeof window !== "undefined" && hydrated;
+  // Defer hydrated to post-mount to avoid SSR/CSR markup mismatch.
+  const [isHydrated, setIsHydrated] = useState(false);
+  useEffect(() => {
+    let canceled = false;
+    Promise.resolve().then(() => {
+      if (!canceled) setIsHydrated(hydrated);
+    });
+    return () => {
+      canceled = true;
+    };
+  }, []);
   return { dna, hydrated: isHydrated };
 }
 

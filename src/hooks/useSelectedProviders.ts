@@ -1,5 +1,5 @@
 "use client";
-import { useCallback, useSyncExternalStore } from "react";
+import { useCallback, useEffect, useState, useSyncExternalStore } from "react";
 
 const STORAGE_KEY = "stream-score:selected-providers";
 const EVENT = "stream-score:providers-changed";
@@ -68,8 +68,18 @@ export function useSelectedProviders(): {
   hydrated: boolean;
 } {
   const selected = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot);
-  // After useSyncExternalStore returns from the browser, hydrated is implicitly true.
-  const hydrated = typeof window !== "undefined";
+  // Defer the hydrated flag flip to post-mount via useEffect — branching on
+  // `typeof window` during render causes SSR/CSR markup divergence.
+  const [hydrated, setHydrated] = useState(false);
+  useEffect(() => {
+    let canceled = false;
+    Promise.resolve().then(() => {
+      if (!canceled) setHydrated(true);
+    });
+    return () => {
+      canceled = true;
+    };
+  }, []);
 
   const setSelected = useCallback((keys: string[]) => {
     writeToStorage(Array.from(new Set(keys)));

@@ -9,7 +9,7 @@
 //   - "Accept": writes ss_consent=granted (1y) and reloads to re-fetch context.
 //   - "Decline": writes ss_consent=denied (1y) and hides the banner.
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
 import { X } from "lucide-react";
 import { dur, ease } from "@/lib/motion";
@@ -43,14 +43,21 @@ export interface ConsentBannerProps {
 
 export function ConsentBanner({ forceShow, className, onChange }: ConsentBannerProps) {
   const reduce = useReducedMotion();
-  // Compute the initial open state from cookies + props lazily, so we never
-  // need to call setState inside an effect on mount.
-  const [open, setOpen] = useState<boolean>(() => {
-    if (typeof document === "undefined") return false;
-    const existing = readCookie(COOKIE_NAME);
-    if (existing) return false;
-    return forceShow !== false;
-  });
+  // Always start closed on both server and client to avoid SSR/CSR markup
+  // divergence. Decide whether to open after mount via an effect.
+  const [open, setOpen] = useState<boolean>(false);
+  useEffect(() => {
+    let canceled = false;
+    Promise.resolve().then(() => {
+      if (canceled) return;
+      const existing = readCookie(COOKIE_NAME);
+      if (existing) return; // user already decided
+      if (forceShow !== false) setOpen(true);
+    });
+    return () => {
+      canceled = true;
+    };
+  }, [forceShow]);
 
   const decide = (granted: boolean) => {
     writeCookie(COOKIE_NAME, granted ? "granted" : "denied");
