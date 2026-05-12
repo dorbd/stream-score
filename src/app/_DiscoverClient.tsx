@@ -1,6 +1,5 @@
 "use client";
 import { useCallback, useEffect, useMemo, useRef, useState } from "react";
-import Image from "next/image";
 import Link from "next/link";
 import { useRouter, useSearchParams } from "next/navigation";
 import { motion, AnimatePresence, useReducedMotion } from "motion/react";
@@ -19,19 +18,15 @@ import { EmptyState } from "@/components/EmptyState";
 import { LoadingGrid, LoadingInline } from "@/components/LoadingState";
 import { useSelectedProviders } from "@/hooks/useSelectedProviders";
 import { useWatchlist, useHidden } from "@/hooks/useLocalSet";
+import { HeroCard } from "@/components/HeroCard";
+import { AnchorPrompt } from "@/components/AnchorPrompt";
+import { useAnchor } from "@/lib/anchor";
 import { PROVIDER_BY_KEY } from "@/lib/providers";
 import { getBrandSwatch } from "@/lib/providerBrands";
 import { MOODS } from "@/lib/moods";
 import { cn } from "@/lib/cn";
 import type { DiscoverResponse, MovieResult, TmdbGenre } from "@/lib/types";
 
-interface TonightMeta {
-  finalScore: number;
-  boost: number;
-  reasons: { key: string; magnitude: number; phrase: string }[];
-  reasonSentence: string;
-  daypart: string;
-}
 interface TonightContext {
   daypart: string;
   daypartLabel: string;
@@ -60,6 +55,16 @@ export function DiscoverClient({
   const [filters, setFilters] = useState<FilterValues>(DEFAULT_FILTERS);
   const [moodKey, setMoodKey] = useState<string | null>(null);
   const [timeBudget, setTimeBudget] = useState<"any" | "short" | "standard" | "long">("any");
+  /**
+   * Year filter — can be:
+   *   "any" → no year constraint
+   *   "<YYYY>" → exact year (e.g. "2025")
+   *   "2010s" / "2000s" / "1990s" / "1980s" / "classics" → decade buckets
+   */
+  const [yearBucket, setYearBucket] = useState<string>("any");
+  const { anchor, hydrated: anchorHydrated } = useAnchor();
+  const [anchorPromptOpen, setAnchorPromptOpen] = useState(false);
+  const prevHiddenCountRef = useRef(0);
   const [results, setResults] = useState<MovieResult[]>([]);
   const [page, setPage] = useState(1);
   const [totalPages, setTotalPages] = useState(1);
@@ -94,6 +99,23 @@ export function DiscoverClient({
     };
   }, [withParam]);
 
+  // Open the AnchorPrompt the FIRST time the user hides a movie (and no anchor set yet).
+  useEffect(() => {
+    if (!anchorHydrated) return;
+    const cur = hidden.values.length;
+    const prev = prevHiddenCountRef.current;
+    prevHiddenCountRef.current = cur;
+    if (cur > prev && !anchor) {
+      let canceled = false;
+      Promise.resolve().then(() => {
+        if (!canceled) setAnchorPromptOpen(true);
+      });
+      return () => {
+        canceled = true;
+      };
+    }
+  }, [hidden.values.length, anchor, anchorHydrated]);
+
   const showOnboarding = hydrated && selected.length === 0 && !hasOnboarded;
 
   const debounceRef = useRef<ReturnType<typeof setTimeout> | null>(null);
@@ -107,8 +129,37 @@ export function DiscoverClient({
       const moodGenres = moodKey ? (MOODS.find((m) => m.key === moodKey)?.genres ?? []) : [];
       const allGenres = moodGenres.length ? moodGenres : filters.genres;
       if (allGenres.length) params.set("genres", allGenres.join(","));
-      if (filters.yearMin) params.set("year_min", String(filters.yearMin));
-      if (filters.yearMax) params.set("year_max", String(filters.yearMax));
+      // Year bucket overrides the slider when active.
+      // Supports: "any" | exact year "2025" | decade "2010s" | "classics"
+      let yMin = filters.yearMin;
+      let yMax = filters.yearMax;
+      if (yearBucket !== "any") {
+        if (/^\d{4}$/.test(yearBucket)) {
+          const y = Number(yearBucket);
+          yMin = y;
+          yMax = y;
+        } else if (yearBucket === "2020s") {
+          yMin = 2020;
+          yMax = 2029;
+        } else if (yearBucket === "2010s") {
+          yMin = 2010;
+          yMax = 2019;
+        } else if (yearBucket === "2000s") {
+          yMin = 2000;
+          yMax = 2009;
+        } else if (yearBucket === "1990s") {
+          yMin = 1990;
+          yMax = 1999;
+        } else if (yearBucket === "1980s") {
+          yMin = 1980;
+          yMax = 1989;
+        } else if (yearBucket === "classics") {
+          yMin = 1920;
+          yMax = 1979;
+        }
+      }
+      if (yMin) params.set("year_min", String(yMin));
+      if (yMax) params.set("year_max", String(yMax));
       const moodRating = moodKey ? (MOODS.find((m) => m.key === moodKey)?.minRating ?? 0) : 0;
       const ratingMin = Math.max(filters.ratingMin, moodRating);
       if (ratingMin > 0) params.set("rating_min", String(ratingMin));
@@ -126,7 +177,7 @@ export function DiscoverClient({
       params.set("page", String(p));
       return params;
     },
-    [filters, selected, hidden.values, moodKey, timeBudget],
+    [filters, selected, hidden.values, moodKey, timeBudget, yearBucket],
   );
 
   const fetchResults = useCallback(
@@ -189,53 +240,30 @@ export function DiscoverClient({
     [visibleResults, watchlist.values],
   );
 
-  const activeFilters = countActiveFilters(filters) + (moodKey ? 1 : 0) + (timeBudget !== "any" ? 1 : 0);
+  const activeFilters =
+    countActiveFilters(filters) +
+    (moodKey ? 1 : 0) +
+    (timeBudget !== "any" ? 1 : 0) +
+    (yearBucket !== "any" ? 1 : 0);
 
-  // Tonight tab — calls /api/tonight to get smart-reranked picks
-  const [tonightLoading, setTonightLoading] = useState(false);
-  const [tonightPick, setTonightPick] = useState<MovieResult & { _tonight?: TonightMeta } | null>(null);
-  const [tonightAlts, setTonightAlts] = useState<(MovieResult & { _tonight?: TonightMeta })[]>([]);
+  // Tonight tab — fetch atmosphere context (daypart, weather, "on this day").
+  // The HeroCard itself fetches /api/daily-pick for the LLM-curated pick.
   const [tonightCtx, setTonightCtx] = useState<TonightContext | null>(null);
 
   useEffect(() => {
     if (tab !== "tonight") return;
     let canceled = false;
-    Promise.resolve().then(() => {
-      if (!canceled) setTonightLoading(true);
-    });
-    const params = new URLSearchParams();
-    if (selected.length) params.set("providers", selected.join(","));
-    if (selected.length && filters.onlyMine) params.set("only_mine", "true");
-    else if (!filters.onlyMine) params.set("only_mine", "false");
-    if (watchlist.values.length) params.set("watchlist", watchlist.values.join(","));
-    if (hidden.values.length) params.set("hide", hidden.values.join(","));
-    const moodGenres = moodKey ? (MOODS.find((m) => m.key === moodKey)?.genres ?? []) : [];
-    if (moodGenres.length) params.set("genres", moodGenres.join(","));
-    fetch(`/api/tonight?${params.toString()}`)
+    fetch(`/api/tonight?providers=${selected.join(",")}`)
       .then((r) => r.json())
       .then((data) => {
-        if (canceled) return;
-        if (data.error) {
-          setTonightPick(null);
-          setTonightAlts([]);
-          return;
-        }
-        setTonightPick(data.pick ?? null);
-        setTonightAlts(data.alts ?? []);
-        setTonightCtx(data.context ?? null);
+        if (canceled || data?.error) return;
+        if (data.context) setTonightCtx(data.context);
       })
-      .catch(() => {})
-      .finally(() => {
-        if (!canceled) setTonightLoading(false);
-      });
+      .catch(() => {});
     return () => {
       canceled = true;
     };
-  }, [tab, selected, watchlist.values, hidden.values, filters.onlyMine, moodKey]);
-
-  // Existing discover grid still uses the discover endpoint
-  const topPick = tonightPick ?? visibleResults[0];
-  const alts = tonightAlts.length ? tonightAlts : visibleResults.slice(1, 4);
+  }, [tab, selected]);
 
   const acceptShareIntersect = () => {
     if (!showShareBanner) return;
@@ -527,6 +555,48 @@ export function DiscoverClient({
               </button>
             ))}
           </div>
+
+          {/* Year chips — Any, current down to 2020, then decade buckets */}
+          <div className="mt-2 flex items-center gap-1.5 overflow-x-auto no-scrollbar">
+            <span className="hidden shrink-0 text-[11px] font-semibold uppercase tracking-wider text-[var(--color-muted)] sm:inline">
+              Year
+            </span>
+            {(() => {
+              const now = new Date().getFullYear();
+              const recentYears: string[] = [];
+              for (let y = now; y >= 2020; y--) recentYears.push(String(y));
+              const buckets: { key: string; label: string }[] = [
+                { key: "any", label: "Any year" },
+                ...recentYears.map((y) => ({ key: y, label: y })),
+                { key: "2010s", label: "2010s" },
+                { key: "2000s", label: "2000s" },
+                { key: "1990s", label: "1990s" },
+                { key: "1980s", label: "1980s" },
+                { key: "classics", label: "Classics" },
+              ];
+              return buckets.map((b) => {
+                const on = yearBucket === b.key;
+                const isSpecificYear = /^\d{4}$/.test(b.key);
+                return (
+                  <button
+                    key={b.key}
+                    type="button"
+                    onClick={() => setYearBucket(b.key)}
+                    className={cn(
+                      "shrink-0 rounded-full border px-2.5 py-1 text-[11px] font-medium transition tabular-nums",
+                      on
+                        ? "border-transparent bg-[var(--color-accent)] text-[var(--color-bg)]"
+                        : "border-[var(--color-border)] text-[var(--color-muted)] hover:border-[var(--color-border-strong)]",
+                      isSpecificYear && !on && "font-mono",
+                    )}
+                    aria-pressed={on}
+                  >
+                    {b.label}
+                  </button>
+                );
+              });
+            })()}
+          </div>
         </div>
       )}
 
@@ -534,45 +604,7 @@ export function DiscoverClient({
       {tab === "tonight" && !error && (
         <section className="space-y-6" aria-live="polite">
           {tonightCtx && <TonightContextBar ctx={tonightCtx} />}
-          {tonightLoading && !topPick && <LoadingGrid count={4} />}
-          {topPick && (
-            <TonightHero
-              movie={topPick}
-              meta={(topPick as MovieResult & { _tonight?: TonightMeta })._tonight}
-              reduce={!!reduce}
-            />
-          )}
-          {alts.length > 0 && (
-            <div>
-              <div className="rubric mb-2" style={{ letterSpacing: "0.24em" }}>Or maybe</div>
-              <div className="no-scrollbar -mx-4 flex snap-x snap-mandatory gap-3 overflow-x-auto px-4 sm:-mx-6 sm:px-6">
-                {alts.map((m, i) => (
-                  <div key={m.tmdbId} className="w-[44vw] shrink-0 snap-center sm:w-[220px]">
-                    <MovieCard movie={m} selectedProviderKeys={selectedSet} index={i} />
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
-          {!tonightLoading && !topPick && (
-            <EmptyState
-              title="The marquee's dark tonight."
-              description="Drop a filter or two and the lights come back on."
-              action={
-                <button
-                  type="button"
-                  onClick={() => {
-                    setFilters(DEFAULT_FILTERS);
-                    setMoodKey(null);
-                    setTimeBudget("any");
-                  }}
-                  className="rounded-xl bg-[var(--color-accent)] px-4 py-2 text-sm font-semibold text-[var(--color-bg)]"
-                >
-                  Reset filters
-                </button>
-              }
-            />
-          )}
+          <HeroCard selectedProviderKeys={selected} />
         </section>
       )}
 
@@ -667,6 +699,7 @@ export function DiscoverClient({
                     setFilters(DEFAULT_FILTERS);
                     setMoodKey(null);
                     setTimeBudget("any");
+                    setYearBucket("any");
                   }}
                   className="rounded-lg border border-[var(--color-border)] bg-[var(--color-surface)] px-4 py-2 text-sm hover:border-[var(--color-border-strong)]"
                 >
@@ -710,124 +743,13 @@ export function DiscoverClient({
           )}
         </section>
       )}
+
+      <AnchorPrompt open={anchorPromptOpen} onOpenChange={setAnchorPromptOpen} />
     </div>
   );
 }
 
-function scoreTextColor(score: number | null | undefined): string {
-  if (score == null) return "var(--color-subtle)";
-  if (score >= 80) return "var(--color-good)";
-  if (score >= 65) return "var(--color-warn)";
-  if (score >= 45) return "var(--color-accent)";
-  return "var(--color-bad)";
-}
 
-function TonightHero({
-  movie,
-  meta: tMeta,
-  reduce,
-}: {
-  movie: MovieResult;
-  meta?: TonightMeta;
-  reduce: boolean;
-}) {
-  const score = tMeta?.finalScore ?? movie.ratings.combined ?? movie.ratings.audience;
-  const color = scoreTextColor(score);
-  const now = new Date();
-  const dateRubric = now
-    .toLocaleDateString("en-US", { month: "short", day: "numeric" })
-    .toUpperCase();
-  const imdb = movie.ratings.imdb;
-  const rt = movie.ratings.rottenTomatoes;
-  const meta = movie.ratings.metacritic;
-
-  return (
-    <Link
-      href={`/movie/${movie.tmdbId}`}
-      className="group relative -mx-4 block overflow-hidden border-y border-[var(--color-border)] sm:-mx-6 sm:rounded-[var(--radius-hero)] sm:border"
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-[1fr_minmax(200px,260px)]">
-        {/* Backdrop column */}
-        <motion.div
-          className="backdrop-undertow relative aspect-[16/10] w-full sm:aspect-[4/5] sm:min-h-[420px]"
-          initial={reduce ? false : { scale: 1.04 }}
-          animate={{ scale: 1 }}
-          transition={{ duration: 1.2, ease: "easeOut" }}
-        >
-          {movie.backdropUrl ? (
-            <div className="absolute inset-0">
-              <Image
-                src={movie.backdropUrl}
-                alt=""
-                fill
-                sizes="(max-width: 768px) 100vw, 720px"
-                priority
-                className="object-cover"
-              />
-            </div>
-          ) : null}
-          <div
-            aria-hidden
-            className="absolute inset-0 z-[2]"
-            style={{
-              background:
-                "linear-gradient(to top, var(--color-bg) 0%, oklch(0.13 0.03 28 / 0.55) 45%, transparent 100%)",
-            }}
-          />
-          <div className="absolute inset-x-0 bottom-0 z-[3] p-5 sm:p-7">
-            <div className="rubric mb-2" style={{ color: "var(--color-accent)", letterSpacing: "0.24em" }}>
-              Pick · Tonight · {dateRubric}
-            </div>
-            <h2 className="font-display text-3xl leading-[1.02] tracking-[-0.02em] sm:text-5xl">
-              {movie.title}
-            </h2>
-            <div className="num-prose mt-1.5 text-[12px] uppercase tracking-wider text-[var(--color-muted)]">
-              {movie.year ?? "—"}
-              {movie.runtime ? ` · ${movie.runtime} min` : ""}
-              {movie.genres[0] ? ` · ${movie.genres.slice(0, 2).join(", ")}` : ""}
-            </div>
-            <p className="mt-3 line-clamp-2 max-w-xl text-sm text-[var(--color-text)]/85">
-              {movie.overview}
-            </p>
-            {tMeta?.reasonSentence && (
-              <div className="mt-3 inline-flex items-center gap-2 rounded-full border border-[var(--color-accent)]/40 bg-[var(--color-accent-wash)] px-3 py-1.5 text-xs text-[var(--color-text)]">
-                <span className="rubric" style={{ color: "var(--color-accent)", letterSpacing: "0.22em" }}>
-                  Why
-                </span>
-                <span className="text-[12px]">{tMeta.reasonSentence}</span>
-              </div>
-            )}
-          </div>
-        </motion.div>
-
-        {/* Score column */}
-        <div className="flex flex-col items-center justify-center gap-5 bg-[var(--color-bg-elevated)] px-5 py-7 sm:px-6">
-          <div className="rubric" style={{ letterSpacing: "0.24em" }}>
-            Combined score
-          </div>
-          <div className="relative">
-            <span
-              aria-hidden
-              className="absolute inset-0 -z-10 rounded-full blur-2xl"
-              style={{ background: color, opacity: 0.25 }}
-            />
-            <div
-              className="num-hero leading-none"
-              style={{
-                color,
-                fontSize: "clamp(96px, 14vw, 128px)",
-                fontWeight: 400,
-              }}
-            >
-              {score == null ? "—" : Math.round(score)}
-            </div>
-          </div>
-          <ScoreMicroBars imdb={imdb} rt={rt} meta={meta} />
-        </div>
-      </div>
-    </Link>
-  );
-}
 
 function TonightContextBar({ ctx }: { ctx: TonightContext }) {
   const weatherEmoji: Record<string, string> = {
@@ -884,41 +806,3 @@ function TonightContextBar({ ctx }: { ctx: TonightContext }) {
   );
 }
 
-function ScoreMicroBars({
-  imdb,
-  rt,
-  meta,
-}: {
-  imdb: number | null;
-  rt: number | null;
-  meta: number | null;
-}) {
-  const rows: { label: string; value: number | null; max: number }[] = [
-    { label: "IMDb", value: imdb, max: 100 },
-    { label: "RT", value: rt, max: 100 },
-    { label: "Meta", value: meta, max: 100 },
-  ];
-  return (
-    <ul className="w-full max-w-[160px] space-y-1.5">
-      {rows.map((r) => {
-        const pct = r.value == null ? 0 : (r.value / r.max) * 100;
-        return (
-          <li key={r.label} className="flex items-center gap-2">
-            <span className="rubric w-9 text-left" style={{ letterSpacing: "0.18em" }}>
-              {r.label}
-            </span>
-            <span className="relative h-1 flex-1 overflow-hidden rounded-full bg-[var(--color-surface-2)]">
-              <span
-                className="absolute inset-y-0 left-0 rounded-full bg-[var(--color-text)]"
-                style={{ width: `${pct}%`, opacity: r.value == null ? 0 : 0.85 }}
-              />
-            </span>
-            <span className="num-data w-6 text-right text-[10px] text-[var(--color-muted)]">
-              {r.value == null ? "—" : Math.round(r.value)}
-            </span>
-          </li>
-        );
-      })}
-    </ul>
-  );
-}

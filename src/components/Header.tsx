@@ -4,6 +4,7 @@ import { Settings, Search, Shuffle } from "lucide-react";
 import { useEffect, useState } from "react";
 import { CommandPalette } from "./CommandPalette";
 import { SurpriseSheet } from "./SurpriseSheet";
+import { AnchorChip } from "./AnchorChip";
 
 export function Header() {
   const [paletteOpen, setPaletteOpen] = useState(false);
@@ -32,6 +33,7 @@ export function Header() {
               score
             </span>
           </Link>
+          <AnchorChip className="hidden sm:inline-flex" />
           <nav className="flex items-center gap-1.5" aria-label="Primary">
             <button
               type="button"
